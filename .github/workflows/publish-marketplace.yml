@@ -1,0 +1,122 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+name: publish-azure-devops-marketplace-extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer version (for example 1.2.3)'
+        required: true
+      publisher:
+        description: 'Marketplace publisher id (overrides manifest)'
+        required: false
+      extensionId:
+        description: 'Marketplace extension id (overrides manifest)'
+        required: false
+  release:
+    types:
+      - published
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      ADO_RESOURCE_ID: 499b84ac-1321-427f-aa17-267ca6975798
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install tooling
+        run: npm install --global tfx-cli@0.22.0
+
+      - name: Resolve extension version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            RAW_TAG='${{ github.event.release.tag_name }}'
+            VERSION="${RAW_TAG#v}"
+          else
+            VERSION='${{ inputs.version }}'
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must be strict semver (x.y.z), got: $VERSION" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Apply version and metadata
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          INPUT_PUBLISHER: ${{ inputs.publisher }}
+          INPUT_EXTENSION_ID: ${{ inputs.extensionId }}
+        run: |
+          cp Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1
+          node - <<'NODE'
+          const fs = require('fs');
+          const version = process.env.VERSION;
+          const publisher = process.env.INPUT_PUBLISHER || undefined;
+          const extensionId = process.env.INPUT_EXTENSION_ID || undefined;
+
+          const manifestPath = 'azure-devops-extension/vss-extension.json';
+          const taskPath = 'azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json';
+
+          const parseJson = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
+          const writeJson = (path, obj) => fs.writeFileSync(path, JSON.stringify(obj, null, 2) + '\n', 'utf8');
+
+          const manifest = parseJson(manifestPath);
+          const task = parseJson(taskPath);
+
+          manifest.version = version;
+          if (publisher) manifest.publisher = publisher;
+          if (extensionId) manifest.id = extensionId;
+
+          const [major, minor, patch] = version.split('.').map((x) => Number(x));
+          task.version = { Major: major, Minor: minor, Patch: patch };
+
+          writeJson(manifestPath, manifest);
+          writeJson(taskPath, task);
+          NODE
+
+      - name: Create VSIX package
+        run: |
+          tfx extension create \
+            --manifest-globs azure-devops-extension/vss-extension.json \
+            --root . \
+            --output-path .
+
+      - name: Azure login using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get Azure DevOps access token from OIDC session
+        id: token
+        run: |
+          TOKEN=$(az account get-access-token --resource "$ADO_RESOURCE_ID" --query accessToken --output tsv)
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Publish extension to Marketplace
+        env:
+          ADO_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          VSIX=$(ls -1 *.vsix | head -n 1)
+          tfx extension publish \
+            --vsix "$VSIX" \
+            --service-url https://marketplace.visualstudio.com \
+            --auth-type pat \
+            --token "$ADO_TOKEN" \
+            --no-prompt

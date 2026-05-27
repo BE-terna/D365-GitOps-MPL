@@ -1,0 +1,84 @@
+{
+  "id": "1788f294-5c13-4d88-95f5-271667f90fdb",
+  "name": "PrepareDailyBuildBranch",
+  "friendlyName": "Prepare daily build branch",
+  "description": "Builds and updates a daily-build branch by merging active pull requests to main.",
+  "helpMarkDown": "Uses Prepare-DailyBuildBranch.ps1 to create and push a consolidated daily-build branch.",
+  "category": "Utility",
+  "author": "BE-terna",
+  "version": {
+    "Major": 0,
+    "Minor": 1,
+    "Patch": 0
+  },
+  "demands": [],
+  "minimumAgentVersion": "2.206.1",
+  "instanceNameFormat": "Prepare daily build branch",
+  "inputs": [
+    {
+      "name": "organizationUri",
+      "type": "string",
+      "label": "Organization URI",
+      "defaultValue": "$(System.CollectionUri)",
+      "required": true,
+      "helpMarkDown": "Azure DevOps organization URL."
+    },
+    {
+      "name": "project",
+      "type": "string",
+      "label": "Project",
+      "defaultValue": "$(System.TeamProject)",
+      "required": true,
+      "helpMarkDown": "Azure DevOps project name or project id."
+    },
+    {
+      "name": "repositoryName",
+      "type": "string",
+      "label": "Repository name",
+      "defaultValue": "$(Build.Repository.Name)",
+      "required": true,
+      "helpMarkDown": "Repository to process."
+    },
+    {
+      "name": "dailyBuildBranch",
+      "type": "string",
+      "label": "Daily build branch",
+      "defaultValue": "daily-build",
+      "required": true,
+      "helpMarkDown": "Target branch name that receives merged pull requests."
+    },
+    {
+      "name": "mergeStrategy",
+      "type": "pickList",
+      "label": "Merge strategy",
+      "defaultValue": "merge",
+      "required": true,
+      "options": {
+        "merge": "Merge",
+        "squash": "Squash"
+      },
+      "helpMarkDown": "Select merge or squash strategy."
+    },
+    {
+      "name": "defaultPriority",
+      "type": "string",
+      "label": "Default priority",
+      "defaultValue": "100",
+      "required": true,
+      "helpMarkDown": "Fallback priority when no priority:x label exists."
+    },
+    {
+      "name": "skipUnchangedPush",
+      "type": "boolean",
+      "label": "Skip push when unchanged",
+      "defaultValue": "false",
+      "required": false,
+      "helpMarkDown": "Skip force-push if target branch content is unchanged."
+    }
+  ],
+  "execution": {
+    "PowerShell3": {
+      "target": "Prepare-DailyBuildBranch.ps1"
+    }
+  }
+}

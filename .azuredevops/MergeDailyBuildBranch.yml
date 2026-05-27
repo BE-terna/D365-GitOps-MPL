@@ -1,12 +1,32 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 trigger: none
 
 schedules:
-- cron: 0 3 * * 1-5
-  displayName: Weekday 3am
-  branches:
-    include:
-    - main
-  always: true
+  - cron: '0 3 * * 1-5'
+    displayName: Weekday 3am
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: mergeStrategy
+    type: string
+    default: merge
+    values:
+      - merge
+      - squash
+  - name: dailyBuildBranch
+    type: string
+    default: daily-build
+  - name: defaultPriority
+    type: number
+    default: 100
+  - name: skipUnchangedPush
+    type: boolean
+    default: false
 
 pool:
   vmImage: ubuntu-latest
@@ -16,12 +36,25 @@ steps:
     fetchDepth: 0
     persistCredentials: true
 
+  # Example usage:
+  # - mergeStrategy: merge   -> merge commits preserved
+  # - mergeStrategy: squash  -> PRs flattened into one commit each
+  # - dailyBuildBranch: custom daily branch name
   - task: PowerShell@2
     displayName: Prepare daily build branch
     inputs:
-      targetType: filePath
-      filePath: scripts/Prepare-DailyBuildBranch.ps1
+      targetType: inline
       pwsh: true
+      script: |
+        $arguments = @(
+          '-MergeStrategy', '${{ parameters.mergeStrategy }}',
+          '-DailyBuildBranch', '${{ parameters.dailyBuildBranch }}',
+          '-DefaultPriority', '${{ parameters.defaultPriority }}'
+        )
+        if ('${{ parameters.skipUnchangedPush }}' -eq 'true') {
+          $arguments += '-SkipUnchangedPush'
+        }
+        & '$(Build.SourcesDirectory)/Prepare-DailyBuildBranch.ps1' @arguments
     env:
       DEVOPS_PAT: $(System.AccessToken)
-      AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)      
+      AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
