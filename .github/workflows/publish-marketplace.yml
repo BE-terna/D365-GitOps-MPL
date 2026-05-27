@@ -81,10 +81,12 @@ jobs:
           PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER_ID }}
         run: |
           tfx extension create \
-            --manifest-globs azure-devops-extension/vss-extension.json \
-            --root . \
+            --no-prompt \
+            --manifest-globs vss-extension.json \
+            --root azure-devops-extension \
             --output-path . \
             --publisher "$PUBLISHER" \
+            --trace-level debug \
             --overrides-file overrides.json
 
       - name: Azure login using OIDC

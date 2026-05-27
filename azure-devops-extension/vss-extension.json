@@ -21,7 +21,8 @@
       "path": "tasks/PrepareDailyBuildBranch"
     },
     {
-      "path": "../LICENSE"
+      "path": "../LICENSE",
+      "packagePath": "LICENSE"
     }
   ],
   "contributions": [
