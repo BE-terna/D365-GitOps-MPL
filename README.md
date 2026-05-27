@@ -29,6 +29,7 @@ A prettified pipeline with parameterized usage is available at:
 - `.github/workflows/publish-marketplace.yml`
   - Supports manual publish (`workflow_dispatch` with explicit semver input).
   - Supports manual environment selection (`marketplace` or `marketplace-preview`).
+  - Downloads `vss-extension.schema.json` next to the manifest and validates `azure-devops-extension/vss-extension.json` before packaging.
   - Publishes automatically when a GitHub release is published.
 
 ## OIDC setup for Azure DevOps Marketplace publishing
