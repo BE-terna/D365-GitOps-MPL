@@ -9,12 +9,6 @@ on:
       version:
         description: 'SemVer version (for example 1.2.3)'
         required: true
-      publisher:
-        description: 'Marketplace publisher id (overrides manifest)'
-        required: false
-      extensionId:
-        description: 'Marketplace extension id (overrides manifest)'
-        required: false
   release:
     types:
       - published
@@ -26,6 +20,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: marketplace
     env:
       ADO_RESOURCE_ID: 499b84ac-1321-427f-aa17-267ca6975798
     steps:
@@ -39,12 +34,6 @@ jobs:
 
       - name: Install tooling
         run: npm install --global tfx-cli@0.23.1
-
-      - name: Get Azure DevOps access token from OIDC session
-        id: token
-        run: |
-          TOKEN=$(az account get-access-token --resource "$ADO_RESOURCE_ID" --query accessToken --output tsv)
-          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Resolve extension version
         id: version
@@ -62,67 +51,41 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Validate publisher configuration
-        env:
-          INPUT_PUBLISHER: ${{ inputs.publisher }}
-        run: |
-          node - <<'NODE'
-          const fs = require('fs');
-          const manifest = JSON.parse(fs.readFileSync('azure-devops-extension/vss-extension.json', 'utf8'));
-          const publisher = process.env.INPUT_PUBLISHER || manifest.publisher;
-          if (!publisher || publisher === 'REPLACE_WITH_YOUR_PUBLISHER_ID') {
-            console.error('Set a real publisher id in manifest.publisher or workflow_dispatch input publisher.');
-            process.exit(1);
-          }
-          NODE
-
-      - name: Apply version and metadata
+      - name: Prepare extension
+        shell: pwsh
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          INPUT_PUBLISHER: ${{ inputs.publisher }}
-          INPUT_EXTENSION_ID: ${{ inputs.extensionId }}
+          EXTENSION_ID: ${{ vars.MARKETPLACE_EXTENSION_ID }}
         run: |
           # Keep extension task script aligned with the root source script before packaging.
-          cp Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1
-          node - <<'NODE'
-          const fs = require('fs');
-          const version = process.env.VERSION;
-          const publisher = process.env.INPUT_PUBLISHER || undefined;
-          const extensionId = process.env.INPUT_EXTENSION_ID || undefined;
+          Copy-Item Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1 -Force
 
-          const manifestPath = 'azure-devops-extension/vss-extension.json';
-          const taskPath = 'azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json';
-
-          const parseJson = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
-          const writeJson = (path, obj) => fs.writeFileSync(path, JSON.stringify(obj, null, 2) + '\n', 'utf8');
-
-          const manifest = parseJson(manifestPath);
-          const task = parseJson(taskPath);
-
-          manifest.version = version;
-          if (publisher) manifest.publisher = publisher;
-          if (extensionId) manifest.id = extensionId;
-
-          const parts = version.split('.');
-          if (parts.length !== 3) {
-            throw new Error(`Invalid semver version: ${version}`);
+          # Update task.json with structured version object (not expressible as a tfx argument).
+          $parts = $env:VERSION.Split('.')
+          $taskPath = 'azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json'
+          $task = Get-Content $taskPath -Raw | ConvertFrom-Json
+          $task.version = [PSCustomObject]@{
+            Major = [int]$parts[0]
+            Minor = [int]$parts[1]
+            Patch = [int]$parts[2]
           }
-          const [major, minor, patch] = parts.map((x) => Number(x));
-          if ([major, minor, patch].some(Number.isNaN)) {
-            throw new Error(`Version contains non-numeric segments: ${version}`);
-          }
-          task.version = { Major: major, Minor: minor, Patch: patch };
+          $task | ConvertTo-Json -Depth 10 | Set-Content $taskPath -Encoding UTF8
 
-          writeJson(manifestPath, manifest);
-          writeJson(taskPath, task);
-          NODE
+          # Create tfx overrides file for the extension id (no dedicated tfx argument exists).
+          [PSCustomObject]@{ id = $env:EXTENSION_ID } | ConvertTo-Json | Set-Content overrides.json -Encoding UTF8
 
       - name: Create VSIX package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER_ID }}
         run: |
           tfx extension create \
             --manifest-globs azure-devops-extension/vss-extension.json \
             --root . \
-            --output-path .
+            --output-path . \
+            --version "$VERSION" \
+            --publisher "$PUBLISHER" \
+            --overrides-file overrides.json
 
       - name: Azure login using OIDC
         id: azure-login
@@ -130,7 +93,19 @@ jobs:
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: true
+
+      - name: Get Azure DevOps access token from OIDC session
+        id: token
+        run: |
+          TOKEN=$(az account get-access-token --resource "$ADO_RESOURCE_ID" --query accessToken --output tsv)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Get user profile
+        run: |
+          az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me \
+            --resource "$ADO_RESOURCE_ID"
 
       - name: Publish extension to Marketplace
         env:
