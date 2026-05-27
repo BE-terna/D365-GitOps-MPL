@@ -1,12 +1,13 @@
 {
-  "$schema": "https://json.schemastore.org/vss-extension.json",
+  "$schema": "https://www.schemastore.org/vss-extension.json",
   "manifestVersion": 1,
-  "id": "d365-gitops-mpl",
-  "publisher": "REPLACE_WITH_YOUR_PUBLISHER_ID",
+  "id": "d365-gitops",
+  "publisher": "REPLACE-WITH-YOUR-PUBLISHER-ID",
   "version": "0.1.0",
-  "name": "D365 GitOps MPL",
+  "name": "D365 GitOps",
   "description": "Prepare and maintain a daily-build branch from active pull requests.",
   "public": false,
+  "baseUri": "https://github.com/BE-terna/D365-GitOps",
   "categories": [
     "Azure Repos"
   ],
