@@ -29,7 +29,7 @@
       "label": "Project",
       "defaultValue": "$(System.TeamProject)",
       "required": true,
-      "helpMarkDown": "Azure DevOps project name or project id."
+      "helpMarkDown": "Azure DevOps project name or project ID."
     },
     {
       "name": "repositoryName",

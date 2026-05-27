@@ -170,7 +170,12 @@ $repositoryId = (az repos show --repository "$RepositoryName" --query id --outpu
 
 Invoke-Git @('fetch', 'origin', 'main')
 Invoke-Git @('checkout', '-B', $DailyBuildBranch, 'origin/main')
-Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File scripts/Merge-LabelFile.ps1 -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
+$mergeLabelScriptPath = Join-Path -Path (Get-Location) -ChildPath 'scripts/Merge-LabelFile.ps1'
+if (Test-Path -Path $mergeLabelScriptPath) {
+	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File $mergeLabelScriptPath -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
+} else {
+	Write-Verbose "Merge label driver script not found at $mergeLabelScriptPath. Skipping merge.d365fo-label.driver configuration."
+}
 $mergedPRs = @()
 $skippedPRs = @()
 

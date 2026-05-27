@@ -13,7 +13,8 @@ This repository now contains an Azure DevOps extension scaffold for `Prepare-Dai
 - `azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json`
 - `azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1`
 
-Before publishing, set `publisher` in `azure-devops-extension/vss-extension.json` to your real Marketplace publisher id (or provide it through workflow input).
+Before publishing, **you must** set `publisher` in `azure-devops-extension/vss-extension.json` to your real Marketplace publisher id (or provide it through workflow input).
+The root `Prepare-DailyBuildBranch.ps1` is the source of truth; the publish workflow copies it into the extension task folder during packaging.
 
 ## Azure DevOps pipeline example
 

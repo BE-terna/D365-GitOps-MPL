@@ -47,11 +47,11 @@ steps:
       pwsh: true
       script: |
         $arguments = @(
-          '-MergeStrategy', '${{ parameters.mergeStrategy }}',
-          '-DailyBuildBranch', '${{ parameters.dailyBuildBranch }}',
-          '-DefaultPriority', '${{ parameters.defaultPriority }}'
+          '-MergeStrategy', "${{ parameters.mergeStrategy }}",
+          '-DailyBuildBranch', "${{ parameters.dailyBuildBranch }}",
+          '-DefaultPriority', "${{ parameters.defaultPriority }}"
         )
-        if ('${{ parameters.skipUnchangedPush }}' -eq 'true') {
+        if ("${{ parameters.skipUnchangedPush }}" -eq 'true') {
           $arguments += '-SkipUnchangedPush'
         }
         # Assumes Prepare-DailyBuildBranch.ps1 is located at repository root.
