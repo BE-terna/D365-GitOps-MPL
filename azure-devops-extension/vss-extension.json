@@ -18,7 +18,7 @@
   ],
   "files": [
     {
-      "path": "azure-devops-extension/tasks/PrepareDailyBuildBranch"
+      "path": "tasks/PrepareDailyBuildBranch"
     },
     {
       "path": "../LICENSE"
@@ -32,7 +32,7 @@
         "ms.vss-distributed-task.tasks"
       ],
       "properties": {
-        "name": "azure-devops-extension/tasks/PrepareDailyBuildBranch"
+        "name": "tasks/PrepareDailyBuildBranch"
       }
     }
   ]
