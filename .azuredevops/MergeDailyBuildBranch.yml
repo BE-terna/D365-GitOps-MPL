@@ -55,7 +55,11 @@ steps:
           $arguments += '-SkipUnchangedPush'
         }
         # Assumes Prepare-DailyBuildBranch.ps1 is located at repository root.
-        & '$(Build.SourcesDirectory)/Prepare-DailyBuildBranch.ps1' @arguments
+        $scriptPath = '$(Build.SourcesDirectory)/Prepare-DailyBuildBranch.ps1'
+        if (-not (Test-Path -Path $scriptPath)) {
+          throw "Script not found: $scriptPath"
+        }
+        & $scriptPath @arguments
     env:
       DEVOPS_PAT: $(System.AccessToken)
       AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)

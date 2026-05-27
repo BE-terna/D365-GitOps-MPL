@@ -56,6 +56,20 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Validate publisher configuration
+        env:
+          INPUT_PUBLISHER: ${{ inputs.publisher }}
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('azure-devops-extension/vss-extension.json', 'utf8'));
+          const publisher = process.env.INPUT_PUBLISHER || manifest.publisher;
+          if (!publisher || publisher === 'REPLACE_WITH_YOUR_PUBLISHER_ID') {
+            console.error('Set a real publisher id in manifest.publisher or workflow_dispatch input publisher.');
+            process.exit(1);
+          }
+          NODE
+
       - name: Apply version and metadata
         env:
           VERSION: ${{ steps.version.outputs.version }}
