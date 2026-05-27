@@ -9,21 +9,23 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 This repository now contains an Azure DevOps extension scaffold for `Prepare-DailyBuildBranch.ps1` under:
 
-- `/tmp/workspace/BE-terna/D365-GitOps-MPL/azure-devops-extension/vss-extension.json`
-- `/tmp/workspace/BE-terna/D365-GitOps-MPL/azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json`
-- `/tmp/workspace/BE-terna/D365-GitOps-MPL/azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1`
+- `azure-devops-extension/vss-extension.json`
+- `azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json`
+- `azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1`
+
+Before publishing, set `publisher` in `azure-devops-extension/vss-extension.json` to your real Marketplace publisher id (or provide it through workflow input).
 
 ## Azure DevOps pipeline example
 
 A prettified pipeline with parameterized usage is available at:
 
-- `/tmp/workspace/BE-terna/D365-GitOps-MPL/.azuredevops/MergeDailyBuildBranch.yml`
+- `.azuredevops/MergeDailyBuildBranch.yml`
 
 ## GitHub Actions for release + publish
 
-- `/tmp/workspace/BE-terna/D365-GitOps-MPL/.github/workflows/create-release.yml`
+- `.github/workflows/create-release.yml`
   - Creates a GitHub release automatically when a semver tag (`vX.Y.Z`) is pushed.
-- `/tmp/workspace/BE-terna/D365-GitOps-MPL/.github/workflows/publish-marketplace.yml`
+- `.github/workflows/publish-marketplace.yml`
   - Supports manual publish (`workflow_dispatch` with explicit semver input).
   - Publishes automatically when a GitHub release is published.
 

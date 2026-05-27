@@ -137,6 +137,19 @@ function Get-LatestPullRequestIteration {
 	return $response.value[-1]
 }
 
+function Resolve-IterationIdForStatus {
+	param(
+		[Parameter(Mandatory = $true)]
+		$PullRequestItem
+	)
+
+	if ($PullRequestItem.PSObject.Properties.Name -contains 'Iteration' -and $PullRequestItem.Iteration -and $PullRequestItem.Iteration.Id) {
+		return [int]$PullRequestItem.Iteration.Id
+	}
+
+	return 1
+}
+
 az devops configure --defaults organization=$OrganizationUri project=$Project
 
 # future idea - dependency-aware ordering (depends-on PR list)
@@ -155,7 +168,6 @@ $pr = $pr | Sort-Object -Property @(
 
 $repositoryId = (az repos show --repository "$RepositoryName" --query id --output tsv).Trim()
 
-#Invoke-Git @('clone', "$OrganizationUri/$([Uri]::EscapeDataString($Project))/_git/$([Uri]::EscapeDataString($RepositoryName))", '.')
 Invoke-Git @('fetch', 'origin', 'main')
 Invoke-Git @('checkout', '-B', $DailyBuildBranch, 'origin/main')
 Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File scripts/Merge-LabelFile.ps1 -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
@@ -225,14 +237,16 @@ if ($shouldPush) {
 
 foreach ($item in $mergedPRs) {
 	try {
-		Set-PullRequestStatus -PullRequestId $item.pullRequestId -IterationId $item.Iteration.Id -State 'succeeded' -Description "Merged into daily-build (iteration: $($item.Iteration.Id)) $($item.lastMergeSourceCommit.commitId)"
+		$iterationId = Resolve-IterationIdForStatus -PullRequestItem $item
+		Set-PullRequestStatus -PullRequestId $item.pullRequestId -IterationId $iterationId -State 'succeeded' -Description "Merged into daily-build (iteration: $iterationId) $($item.lastMergeSourceCommit.commitId)"
 	} catch {
 		Write-Warning "Failed to post status for PR $($item.pullRequestId): $_"
 	}
 }
 foreach ($item in $skippedPRs) {
 	try {
-		Set-PullRequestStatus -PullRequestId $item.pullRequestId -IterationId $item.Iteration.Id -State 'failed' -Description "Merge conflict - skipped (iteration: $($item.Iteration.Id)) $($item.lastMergeSourceCommit.commitId)"
+		$iterationId = Resolve-IterationIdForStatus -PullRequestItem $item
+		Set-PullRequestStatus -PullRequestId $item.pullRequestId -IterationId $iterationId -State 'failed' -Description "Merge conflict - skipped (iteration: $iterationId) $($item.lastMergeSourceCommit.commitId)"
 	} catch {
 		Write-Warning "Failed to post status for PR $($item.pullRequestId): $_"
 	}

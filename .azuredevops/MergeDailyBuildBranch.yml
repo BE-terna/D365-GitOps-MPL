@@ -54,6 +54,7 @@ steps:
         if ('${{ parameters.skipUnchangedPush }}' -eq 'true') {
           $arguments += '-SkipUnchangedPush'
         }
+        # Assumes Prepare-DailyBuildBranch.ps1 is located at repository root.
         & '$(Build.SourcesDirectory)/Prepare-DailyBuildBranch.ps1' @arguments
     env:
       DEVOPS_PAT: $(System.AccessToken)

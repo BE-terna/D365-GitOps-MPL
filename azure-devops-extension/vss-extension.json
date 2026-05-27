@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "d365-gitops-mpl",
-  "publisher": "your-publisher-id",
+  "publisher": "REPLACE_WITH_YOUR_PUBLISHER_ID",
   "version": "0.1.0",
   "name": "D365 GitOps MPL",
   "description": "Prepare and maintain a daily-build branch from active pull requests.",
