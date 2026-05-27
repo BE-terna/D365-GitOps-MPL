@@ -11,12 +11,12 @@ on:
         required: true
       environment:
         description: 'Target environment'
-        required: false
-        default: marketplace
+        required: true
+        default: marketplace-preview
         type: choice
         options:
-          - marketplace
           - marketplace-preview
+          - marketplace
   release:
     types:
       - published
