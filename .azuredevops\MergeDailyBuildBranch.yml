@@ -1,0 +1,27 @@
+trigger: none
+
+schedules:
+- cron: 0 3 * * 1-5
+  displayName: Weekday 3am
+  branches:
+    include:
+    - main
+  always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: true
+
+  - task: PowerShell@2
+    displayName: Prepare daily build branch
+    inputs:
+      targetType: filePath
+      filePath: scripts/Prepare-DailyBuildBranch.ps1
+      pwsh: true
+    env:
+      DEVOPS_PAT: $(System.AccessToken)
+      AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)      
