@@ -30,15 +30,21 @@ jobs:
       ADO_RESOURCE_ID: 499b84ac-1321-427f-aa17-267ca6975798
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '>=22'
 
       - name: Install tooling
-        run: npm install --global tfx-cli@0.22.0
+        run: npm install --global tfx-cli@0.23.1
+
+      - name: Get Azure DevOps access token from OIDC session
+        id: token
+        run: |
+          TOKEN=$(az account get-access-token --resource "$ADO_RESOURCE_ID" --query accessToken --output tsv)
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Resolve extension version
         id: version
@@ -119,17 +125,12 @@ jobs:
             --output-path .
 
       - name: Azure login using OIDC
-        uses: azure/login@v2
+        id: azure-login
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Get Azure DevOps access token from OIDC session
-        id: token
-        run: |
-          TOKEN=$(az account get-access-token --resource "$ADO_RESOURCE_ID" --query accessToken --output tsv)
-          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Publish extension to Marketplace
         env:
