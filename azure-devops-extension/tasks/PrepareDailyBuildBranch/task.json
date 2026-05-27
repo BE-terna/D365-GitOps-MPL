@@ -78,7 +78,8 @@
   ],
   "execution": {
     "PowerShell3": {
-      "target": "Prepare-DailyBuildBranch.ps1"
+      "target": "Prepare-DailyBuildBranch.ps1",
+      "argumentFormat": "-organizationUri \"$(organizationUri)\" -project \"$(project)\" -repositoryName \"$(repositoryName)\" -dailyBuildBranch \"$(dailyBuildBranch)\" -mergeStrategy \"$(mergeStrategy)\" -defaultPriority \"$(defaultPriority)\" -skipUnchangedPush:$(skipUnchangedPush)"
     }
   }
 }
