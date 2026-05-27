@@ -21,7 +21,7 @@
       "path": "azure-devops-extension/tasks/PrepareDailyBuildBranch"
     },
     {
-      "path": "LICENSE"
+      "path": "../LICENSE"
     }
   ],
   "contributions": [

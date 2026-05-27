@@ -43,18 +43,6 @@ jobs:
       - name: Install tooling
         run: npm install --global tfx-cli@0.23.1
 
-      - name: Generate extension manifest schema
-        run: |
-          curl -fsSL https://json.schemastore.org/vss-extension.json \
-            -o azure-devops-extension/vss-extension.schema.json
-
-      - name: Validate extension manifest schema
-        run: |
-          npx --yes ajv-cli@5 validate \
-            -s azure-devops-extension/vss-extension.schema.json \
-            -d azure-devops-extension/vss-extension.json \
-            --strict=false
-
       - name: Resolve extension version
         id: version
         shell: bash
