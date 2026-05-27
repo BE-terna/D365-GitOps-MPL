@@ -9,6 +9,14 @@ on:
       version:
         description: 'SemVer version (for example 1.2.3)'
         required: true
+      environment:
+        description: 'Target environment'
+        required: false
+        default: marketplace
+        type: choice
+        options:
+          - marketplace
+          - marketplace-preview
   release:
     types:
       - published
@@ -20,7 +28,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    environment: marketplace
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'marketplace' }}
     env:
       ADO_RESOURCE_ID: 499b84ac-1321-427f-aa17-267ca6975798
     steps:
@@ -56,34 +64,26 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           EXTENSION_ID: ${{ vars.MARKETPLACE_EXTENSION_ID }}
+          TARGET_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'marketplace' }}
         run: |
           # Keep extension task script aligned with the root source script before packaging.
           Copy-Item Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1 -Force
 
-          # Update task.json with structured version object (not expressible as a tfx argument).
-          $parts = $env:VERSION.Split('.')
-          $taskPath = 'azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json'
-          $task = Get-Content $taskPath -Raw | ConvertFrom-Json
-          $task.version = [PSCustomObject]@{
-            Major = [int]$parts[0]
-            Minor = [int]$parts[1]
-            Patch = [int]$parts[2]
-          }
-          $task | ConvertTo-Json -Depth 10 | Set-Content $taskPath -Encoding UTF8
-
-          # Create tfx overrides file for the extension id (no dedicated tfx argument exists).
-          [PSCustomObject]@{ id = $env:EXTENSION_ID } | ConvertTo-Json | Set-Content overrides.json -Encoding UTF8
+          $isPublic = $env:TARGET_ENVIRONMENT -eq 'marketplace'
+          [PSCustomObject]@{
+            id = $env:EXTENSION_ID
+            version = $env:VERSION
+            public = $isPublic
+          } | ConvertTo-Json | Set-Content overrides.json -Encoding UTF8
 
       - name: Create VSIX package
         env:
-          VERSION: ${{ steps.version.outputs.version }}
           PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER_ID }}
         run: |
           tfx extension create \
             --manifest-globs azure-devops-extension/vss-extension.json \
             --root . \
             --output-path . \
-            --version "$VERSION" \
             --publisher "$PUBLISHER" \
             --overrides-file overrides.json
 
