@@ -1,0 +1,39 @@
+{
+  "$schema": "https://www.schemastore.org/vss-extension.json",
+  "manifestVersion": 1,
+  "id": "d365-gitops",
+  "publisher": "REPLACE-WITH-YOUR-PUBLISHER-ID",
+  "version": "0.1.0",
+  "name": "D365 GitOps",
+  "description": "Prepare and maintain a daily-build branch from active pull requests.",
+  "public": false,
+  "baseUri": "https://github.com/BE-terna/D365-GitOps",
+  "categories": [
+    "Azure Repos"
+  ],
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "files": [
+    {
+      "path": "azure-devops-extension/tasks/PrepareDailyBuildBranch"
+    },
+    {
+      "path": "LICENSE"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "prepare-daily-build-branch-task",
+      "type": "ms.vss-distributed-task.task",
+      "targets": [
+        "ms.vss-distributed-task.tasks"
+      ],
+      "properties": {
+        "name": "azure-devops-extension/tasks/PrepareDailyBuildBranch"
+      }
+    }
+  ]
+}
