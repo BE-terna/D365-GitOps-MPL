@@ -45,7 +45,8 @@ A prettified pipeline with parameterized usage is available at:
 4. In Entra ID app, add a **Federated credential**:
    - Issuer: `https://token.actions.githubusercontent.com`
    - Subject for branch-based runs (example): `repo:BE-terna/D365-GitOps-MPL:ref:refs/heads/main`
-   - Subject for release-based runs (recommended): `repo:BE-terna/D365-GitOps-MPL:environment:production` (if environments are used)
+   - Subject for release-based runs (recommended): `repo:BE-terna/D365-GitOps-MPL:environment:marketplace` (if environments are used)
+   - If preview publishes use a separate federated credential, add: `repo:BE-terna/D365-GitOps-MPL:environment:marketplace-preview`
 5. Grant the app permissions/access required to publish under your Azure DevOps Marketplace publisher.
 6. Push a semver tag (`v1.2.3`) to auto-create a release, or manually create a GitHub release.
 7. Publishing workflow logs in with OIDC (`azure/login`) and requests an Azure DevOps access token for resource id `499b84ac-1321-427f-aa17-267ca6975798`.
