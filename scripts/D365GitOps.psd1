@@ -68,7 +68,7 @@ PowerShellVersion = '7.0'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Register-D365MergeDriver'
+FunctionsToExport = 'Register-D365MergeDriver', 'Invoke-PrepareDailyBuildBranch'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -86,7 +86,12 @@ AliasesToExport = @()
 # ModuleList = @()
 
 # List of all files packaged with this module
-# FileList = @()
+FileList = @(
+    'D365GitOps.psm1',
+    'DeveloperSetup/Register-D365MergeDriver.ps1',
+    'MergeDriver/Merge-LabelFile.ps1',
+    'DailyBuild/Prepare-DailyBuildBranch.ps1'
+)
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{

@@ -14,50 +14,54 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
         **/AxLabelFile/LabelResources/*/*.label.txt merge=d365fo-label
     is automatically merged using Merge-LabelFile.ps1.
 
-    The driver path is resolved from this script's own location so it works whether
-    the module was installed from the PowerShell Gallery or cloned from source.
+    The driver path is resolved relative to this file's location so it works whether
+    the module is installed from the PowerShell Gallery or used directly from source.
+
+    This file is a function-definition source.  It is dot-sourced by D365GitOps.psm1
+    and can also be dot-sourced directly:
+
+        . ./scripts/DeveloperSetup/Register-D365MergeDriver.ps1
+        Register-D365MergeDriver
 
 .PARAMETER Global
     When specified, the merge driver is registered in the user's global git config
     (~/.gitconfig) instead of the repository-local .git/config.
 
 .EXAMPLE
-    # Register locally for the current repository (run from within a git clone):
-    pwsh -File scripts/DeveloperSetup/Register-D365MergeDriver.ps1
-
-.EXAMPLE
-    # Register globally for all repositories on this machine:
-    pwsh -File scripts/DeveloperSetup/Register-D365MergeDriver.ps1 -Global
-
-.EXAMPLE
-    # Via the D365GitOps module:
+    # Via the D365GitOps module (recommended):
     Import-Module D365GitOps
     Register-D365MergeDriver
+
+.EXAMPLE
+    # Dot-source and call directly:
+    . ./scripts/DeveloperSetup/Register-D365MergeDriver.ps1
+    Register-D365MergeDriver -Global
 #>
+function Register-D365MergeDriver {
+    [CmdletBinding()]
+    param(
+        [switch]$Global
+    )
 
-[CmdletBinding()]
-param(
-    [switch]$Global
-)
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
 
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
+    $mergeLabelScript = Join-Path (Split-Path $PSScriptRoot -Parent) 'MergeDriver/Merge-LabelFile.ps1'
 
-$scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'MergeDriver/Merge-LabelFile.ps1'
+    if (-not (Test-Path -LiteralPath $mergeLabelScript)) {
+        throw "Merge-LabelFile.ps1 not found at expected path: $mergeLabelScript"
+    }
 
-if (-not (Test-Path -LiteralPath $scriptPath)) {
-    throw "Merge-LabelFile.ps1 not found at expected path: $scriptPath"
+    $driver = "pwsh -File `"$mergeLabelScript`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P"
+    $scope  = if ($Global) { '--global' } else { '--local' }
+
+    & git config $scope merge.d365fo-label.name   'AxLabel file merger'
+    & git config $scope merge.d365fo-label.driver $driver
+
+    Write-Host "Merge driver 'd365fo-label' registered ($( if ($Global) { 'global' } else { 'local' }))."
+    Write-Host "  Name:   AxLabel file merger"
+    Write-Host "  Driver: $driver"
+    Write-Host ''
+    Write-Host 'Ensure your repository contains a .gitattributes file with:'
+    Write-Host '  **/AxLabelFile/LabelResources/*/*.label.txt merge=d365fo-label'
 }
-
-$driver = "pwsh -File `"$scriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P"
-$scope  = if ($Global) { '--global' } else { '--local' }
-
-& git config $scope merge.d365fo-label.name   'AxLabel file merger'
-& git config $scope merge.d365fo-label.driver $driver
-
-Write-Host "Merge driver 'd365fo-label' registered ($( if ($Global) { 'global' } else { 'local' }))."
-Write-Host "  Name:   AxLabel file merger"
-Write-Host "  Driver: $driver"
-Write-Host ''
-Write-Host 'Ensure your repository contains a .gitattributes file with:'
-Write-Host '  **/AxLabelFile/LabelResources/*/*.label.txt merge=d365fo-label'

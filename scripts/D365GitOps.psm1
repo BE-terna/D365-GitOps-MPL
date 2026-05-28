@@ -4,50 +4,63 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #>
 
+# Load function definitions from their dedicated source files.
+. "$PSScriptRoot/DeveloperSetup/Register-D365MergeDriver.ps1"
+
 <#
 .SYNOPSIS
-    Registers the d365fo-label git merge driver for the current repository (or globally).
+    Builds and updates a daily-build branch by merging active pull requests to main.
 
 .DESCRIPTION
-    Configures the git merge driver that handles 3-way merges of AxLabel translation
-    files.  After registration any file matched by the .gitattributes rule
-        **/AxLabelFile/LabelResources/*/*.label.txt merge=d365fo-label
-    is automatically merged using Merge-LabelFile.ps1 from this module.
+    Delegates to DailyBuild/Prepare-DailyBuildBranch.ps1 with the same parameters.
+    See that script for full documentation.
 
-.PARAMETER Global
-    When specified, the merge driver is registered in the user's global git config
-    (~/.gitconfig) instead of the repository-local .git/config.
+.PARAMETER OrganizationUri
+    Azure DevOps organization URL. Defaults to $env:SYSTEM_COLLECTIONURI.
+
+.PARAMETER Project
+    Azure DevOps project name or ID. Defaults to $env:SYSTEM_TEAMPROJECTID.
+
+.PARAMETER RepositoryName
+    Repository to process. Defaults to $env:BUILD_REPOSITORY_NAME.
+
+.PARAMETER DailyBuildBranch
+    Target branch name that receives merged pull requests. Default: 'daily-build'.
+
+.PARAMETER MergeStrategy
+    'merge' (default) or 'squash'.
+
+.PARAMETER DefaultPriority
+    Fallback priority when no priority:x label exists. Default: 100.
+
+.PARAMETER Pat
+    Azure DevOps personal access token. Defaults to $env:DEVOPS_PAT.
+
+.PARAMETER SkipUnchangedPush
+    Skip force-push if the target branch content is unchanged.
 
 .EXAMPLE
-    Register-D365MergeDriver
+    Invoke-PrepareDailyBuildBranch -OrganizationUri https://dev.azure.com/my-org -Project my-project -RepositoryName my-repo
 
 .EXAMPLE
-    Register-D365MergeDriver -Global
+    Import-Module D365GitOps
+    Invoke-PrepareDailyBuildBranch -MergeStrategy squash -SkipUnchangedPush
 #>
-function Register-D365MergeDriver {
+function Invoke-PrepareDailyBuildBranch {
     [CmdletBinding()]
     param(
-        [switch]$Global
+        [string]$OrganizationUri  = $env:SYSTEM_COLLECTIONURI,
+        [string]$Project          = $env:SYSTEM_TEAMPROJECTID,
+        [string]$RepositoryName   = $env:BUILD_REPOSITORY_NAME,
+        [string]$DailyBuildBranch = 'daily-build',
+        [ValidateSet('merge', 'squash')]
+        [string]$MergeStrategy    = 'merge',
+        [int]$DefaultPriority     = 100,
+        [string]$Pat              = $env:DEVOPS_PAT,
+        [switch]$SkipUnchangedPush
     )
 
-    $scriptPath = Join-Path $PSScriptRoot 'MergeDriver/Merge-LabelFile.ps1'
-
-    if (-not (Test-Path -LiteralPath $scriptPath)) {
-        throw "Merge-LabelFile.ps1 not found at expected path: $scriptPath"
-    }
-
-    $driver = "pwsh -File `"$scriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P"
-    $scope  = if ($Global) { '--global' } else { '--local' }
-
-    & git config $scope merge.d365fo-label.name   'AxLabel file merger'
-    & git config $scope merge.d365fo-label.driver $driver
-
-    Write-Host "Merge driver 'd365fo-label' registered ($( if ($Global) { 'global' } else { 'local' }))."
-    Write-Host "  Name:   AxLabel file merger"
-    Write-Host "  Driver: $driver"
-    Write-Host ''
-    Write-Host 'Ensure your repository contains a .gitattributes file with:'
-    Write-Host '  **/AxLabelFile/LabelResources/*/*.label.txt merge=d365fo-label'
+    & "$PSScriptRoot/DailyBuild/Prepare-DailyBuildBranch.ps1" @PSBoundParameters
 }
 
-Export-ModuleMember -Function Register-D365MergeDriver
+Export-ModuleMember -Function Register-D365MergeDriver, Invoke-PrepareDailyBuildBranch
