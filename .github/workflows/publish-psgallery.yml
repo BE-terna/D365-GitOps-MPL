@@ -1,0 +1,74 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+name: publish-powershell-gallery
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer version (for example 1.2.3)'
+        required: true
+  release:
+    types:
+      - published
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: psgallery
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Resolve module version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            RAW_TAG='${{ github.event.release.tag_name }}'
+            VERSION="${RAW_TAG#v}"
+          else
+            VERSION='${{ inputs.version }}'
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must be strict semver (x.y.z), got: $VERSION" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login using OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Get PowerShell Gallery API key
+        id: psgallery-key
+        run: |
+          KEY=$(az keyvault secret show \
+            --vault-name "${{ vars.AZURE_KEYVAULT_NAME }}" \
+            --name PSGalleryApiKey \
+            --query value \
+            --output tsv)
+          echo "::add-mask::$KEY"
+          echo "api-key=$KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Set module version
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          Update-ModuleManifest -Path ./scripts/D365GitOps.psd1 -ModuleVersion $env:VERSION
+
+      - name: Publish to PowerShell Gallery
+        shell: pwsh
+        env:
+          NUGET_AUTH_TOKEN: ${{ steps.psgallery-key.outputs.api-key }}
+        run: |
+          Publish-PSResource -Path ./scripts -Repository PSGallery -ApiKey $env:NUGET_AUTH_TOKEN -Verbose
