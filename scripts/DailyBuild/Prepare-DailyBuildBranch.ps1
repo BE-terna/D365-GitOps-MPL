@@ -172,7 +172,7 @@ Invoke-Git @('fetch', 'origin', 'main')
 Invoke-Git @('checkout', '-B', $DailyBuildBranch, 'origin/main')
 $mergeLabelScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'MergeDriver/Merge-LabelFile.ps1'
 if (Test-Path -Path $mergeLabelScriptPath) {
-	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File $mergeLabelScriptPath -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
+	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File `"$mergeLabelScriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
 } else {
 	Write-Verbose "Merge label driver script not found at $mergeLabelScriptPath. Skipping merge.d365fo-label.driver configuration."
 }
