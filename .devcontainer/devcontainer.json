@@ -2,6 +2,6 @@
   "image": "mcr.microsoft.com/devcontainers/universal",
   "features": {},
   "onCreateCommand": [
-    "dotnet tool install --global PowerShell"
+    //"dotnet tool install --global PowerShell"
   ]
 }
