@@ -86,7 +86,7 @@ function Invoke-GitWithCommitIdentity {
 	}
 }
 
-function Resolve-BuildResultsUrl {
+function Get-BuildResultsUrl {
 	$collectionUri = if ($env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI) { $env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI } elseif ($env:SYSTEM_COLLECTIONURI) { $env:SYSTEM_COLLECTIONURI } else { $OrganizationUri }
 	if ([string]::IsNullOrWhiteSpace($collectionUri)) {
 		return ''
@@ -132,7 +132,7 @@ function Set-PullRequestStatus {
 	)
 
 	$authHeader = "Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("PAT:$Pat")))"
-	$targetUrl = Resolve-BuildResultsUrl
+	$targetUrl = Get-BuildResultsUrl
 	$body = @{
 		state       = $State
 		description = $Description
