@@ -86,6 +86,38 @@ function Invoke-GitWithCommitIdentity {
 	}
 }
 
+function Resolve-BuildResultsUrl {
+	$collectionUri = if ($env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI) { $env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI } elseif ($env:SYSTEM_COLLECTIONURI) { $env:SYSTEM_COLLECTIONURI } else { $OrganizationUri }
+	if ([string]::IsNullOrWhiteSpace($collectionUri)) {
+		return ''
+	}
+
+	$buildId = $env:BUILD_BUILDID
+	if ([string]::IsNullOrWhiteSpace($buildId)) {
+		return $collectionUri
+	}
+
+	$projectName = if ($env:SYSTEM_TEAMPROJECT) { $env:SYSTEM_TEAMPROJECT } else { $Project }
+	$baseUri = $collectionUri.TrimEnd('/')
+	$queryParts = @(
+		"buildId=$([Uri]::EscapeDataString($buildId))",
+		'view=logs'
+	)
+
+	$jobId = $env:SYSTEM_JOBID
+	if ([string]::IsNullOrWhiteSpace($jobId) -and $env:SYSTEM_OIDCREQUESTURI -match '/jobs/([^/]+)/') {
+		$jobId = $Matches[1]
+	}
+	if (-not [string]::IsNullOrWhiteSpace($jobId)) {
+		$queryParts += "j=$([Uri]::EscapeDataString($jobId))"
+	}
+	if (-not [string]::IsNullOrWhiteSpace($env:SYSTEM_TASKINSTANCEID)) {
+		$queryParts += "t=$([Uri]::EscapeDataString($env:SYSTEM_TASKINSTANCEID))"
+	}
+
+	return "$baseUri/$([Uri]::EscapeDataString($projectName))/_build/results?$($queryParts -join '&')"
+}
+
 function Set-PullRequestStatus {
 	param(
 		[Parameter(Mandatory = $true)]
@@ -100,7 +132,7 @@ function Set-PullRequestStatus {
 	)
 
 	$authHeader = "Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("PAT:$Pat")))"
-	$targetUrl = if ($env:BUILD_BUILDURI) { $env:BUILD_BUILDURI } elseif ($env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI) { $env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI } else { '' }
+	$targetUrl = Resolve-BuildResultsUrl
 	$body = @{
 		state       = $State
 		description = $Description
