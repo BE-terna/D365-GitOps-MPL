@@ -110,6 +110,8 @@ function Get-BuildResultsUrl {
 	}
 	if (-not [string]::IsNullOrWhiteSpace($jobId)) {
 		$queryParts += "j=$([Uri]::EscapeDataString($jobId))"
+	} else {
+		Write-Verbose 'SYSTEM_JOBID was not available; omitting the job query parameter from build results URL.'
 	}
 	if (-not [string]::IsNullOrWhiteSpace($env:SYSTEM_TASKINSTANCEID)) {
 		$queryParts += "t=$([Uri]::EscapeDataString($env:SYSTEM_TASKINSTANCEID))"
