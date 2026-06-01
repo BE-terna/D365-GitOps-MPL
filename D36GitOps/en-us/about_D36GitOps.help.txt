@@ -1,0 +1,12 @@
+﻿TOPIC
+	about_D36GitOps
+	
+SHORT DESCRIPTION
+	A short synopsis of D36GitOps
+
+LONG DESCRIPTION
+	A more detailed description of D36GitOps,
+	Should tell the user how to get started with this module.
+	
+KEYWORDS
+	module development debugging
