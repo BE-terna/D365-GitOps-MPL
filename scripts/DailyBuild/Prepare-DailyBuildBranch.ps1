@@ -6,14 +6,14 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 [CmdletBinding()]
 param(
-	[string]$OrganizationUri  = $env:SYSTEM_COLLECTIONURI,
-	[string]$Project          = $env:SYSTEM_TEAMPROJECTID,
-	[string]$RepositoryName   = $env:BUILD_REPOSITORY_NAME,
+	[string]$OrganizationUri = $env:SYSTEM_COLLECTIONURI,
+	[string]$Project = $env:SYSTEM_TEAMPROJECTID,
+	[string]$RepositoryName = $env:BUILD_REPOSITORY_NAME,
 	[string]$DailyBuildBranch = 'daily-build',
 	[ValidateSet('merge', 'squash')]
-	[string]$MergeStrategy    = 'merge',
-	[int]$DefaultPriority     = 100,
-	[string]$Pat              = $env:DEVOPS_PAT,
+	[string]$MergeStrategy = 'merge',
+	[int]$DefaultPriority = 100,
+	[string]$Pat = $env:DEVOPS_PAT,
 	[switch]$SkipUnchangedPush
 )
 
@@ -87,37 +87,29 @@ function Invoke-GitWithCommitIdentity {
 }
 
 function Get-BuildResultsUrl {
-	$collectionUri = if ($env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI) { $env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI } elseif ($env:SYSTEM_COLLECTIONURI) { $env:SYSTEM_COLLECTIONURI } else { $OrganizationUri }
+	$collectionUri = if ($env:SYSTEM_COLLECTIONURI) { $env:SYSTEM_COLLECTIONURI } else { $OrganizationUri }
 	if ([string]::IsNullOrWhiteSpace($collectionUri)) {
 		return ''
 	}
 
 	$buildId = $env:BUILD_BUILDID
 	if ([string]::IsNullOrWhiteSpace($buildId)) {
-		return $collectionUri
+		return ''
 	}
 
 	$projectName = if ($env:SYSTEM_TEAMPROJECT) { $env:SYSTEM_TEAMPROJECT } else { $Project }
 	$baseUri = $collectionUri.TrimEnd('/')
-	$queryParts = @(
-		"buildId=$([Uri]::EscapeDataString($buildId))",
-		'view=logs'
-	)
-
-	$jobId = $env:SYSTEM_JOBID
-	if ([string]::IsNullOrWhiteSpace($jobId) -and $env:SYSTEM_OIDCREQUESTURI -match '/jobs/([^/]+)/') {
-		$jobId = $Matches[1]
-	}
-	if (-not [string]::IsNullOrWhiteSpace($jobId)) {
-		$queryParts += "j=$([Uri]::EscapeDataString($jobId))"
-	} else {
-		Write-Verbose 'SYSTEM_JOBID was not available; omitting the job query parameter from build results URL.'
-	}
-	if (-not [string]::IsNullOrWhiteSpace($env:SYSTEM_TASKINSTANCEID)) {
-		$queryParts += "t=$([Uri]::EscapeDataString($env:SYSTEM_TASKINSTANCEID))"
+	$queryParts = @{
+		"buildId" = $buildId
+		'view'    = 'logs'
+		"j"       = $env:SYSTEM_JOBID
+		"t"       = $env:SYSTEM_TASKINSTANCEID
+		"s"       = $env:SYSTEM_STAGEID
 	}
 
-	return "$baseUri/$([Uri]::EscapeDataString($projectName))/_build/results?$($queryParts -join '&')"
+	$queryString = ($queryParts.GetEnumerator() | ForEach-Object { "$($_.Key)=$([uri]::EscapeDataString($_.Value))" }) -join '&'
+
+	return "$baseUri/$([Uri]::EscapeDataString($projectName))/_build/results?$queryString"
 }
 
 function Set-PullRequestStatus {
@@ -148,7 +140,8 @@ function Set-PullRequestStatus {
 	$uri = "$OrganizationUri/$([Uri]::EscapeDataString($Project))/_apis/git/repositories/$repositoryId/pullRequests/$PullRequestId/statuses?api-version=7.1"
 	try {
 		Invoke-RestMethod -Uri $uri -Method Post -Body $body -ContentType 'application/json' -Headers @{ Authorization = $authHeader } | Out-Null
-	} catch {
+	}
+ catch {
 		Write-Warning "Failed to post status to PR !$PullRequestId : $_"
 	}
 }
@@ -207,7 +200,8 @@ Invoke-Git @('checkout', '-B', $DailyBuildBranch, 'origin/main')
 $mergeLabelScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'MergeDriver/Merge-LabelFile.ps1'
 if (Test-Path -Path $mergeLabelScriptPath) {
 	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File `"$mergeLabelScriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
-} else {
+}
+else {
 	Write-Verbose "Merge label driver script not found at $mergeLabelScriptPath. Skipping merge.d365fo-label.driver configuration."
 }
 $mergedPRs = @()
@@ -245,7 +239,8 @@ foreach ($item in $pr) {
 			}
 		}
 		$mergedPRs += $item
-	} catch {
+	}
+ catch {
 		Write-Warning "Merge failed for PR $($item.pullRequestId) ($sourceBranch). Skipping."
 		& git merge --abort | Out-Null
 		& git reset --hard HEAD | Out-Null
@@ -278,7 +273,8 @@ foreach ($item in $mergedPRs) {
 	try {
 		$iterationId = Resolve-IterationIdForStatus -PullRequestItem $item
 		Set-PullRequestStatus -PullRequestId $item.pullRequestId -IterationId $iterationId -State 'succeeded' -Description "Merged into daily-build (iteration: $iterationId) $($item.lastMergeSourceCommit.commitId)"
-	} catch {
+	}
+ catch {
 		Write-Warning "Failed to post status for PR $($item.pullRequestId): $_"
 	}
 }
@@ -286,7 +282,8 @@ foreach ($item in $skippedPRs) {
 	try {
 		$iterationId = Resolve-IterationIdForStatus -PullRequestItem $item
 		Set-PullRequestStatus -PullRequestId $item.pullRequestId -IterationId $iterationId -State 'failed' -Description "Merge conflict - skipped (iteration: $iterationId) $($item.lastMergeSourceCommit.commitId)"
-	} catch {
+	}
+ catch {
 		Write-Warning "Failed to post status for PR $($item.pullRequestId): $_"
 	}
 }
@@ -296,12 +293,14 @@ Write-Host '=== Daily Build Summary ==='
 if ($mergedPRs.Count -gt 0) {
 	$mergedList = ($mergedPRs | ForEach-Object { "!$($_.pullRequestId)" }) -join ', '
 	Write-Host "Merged:  $mergedList"
-} else {
+}
+else {
 	Write-Host 'Merged:  (none)'
 }
 if ($skippedPRs.Count -gt 0) {
 	$skippedList = ($skippedPRs | ForEach-Object { "!$($_.pullRequestId) (merge conflict)" }) -join ', '
 	Write-Host "Skipped: $skippedList"
-} else {
+}
+else {
 	Write-Host 'Skipped: (none)'
 }
