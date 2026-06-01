@@ -1,7 +1,7 @@
 {
   "image": "mcr.microsoft.com/devcontainers/universal",
   "features": {},
-  "onCreateCommand": [
-    //"dotnet tool install --global PowerShell"
-  ]
+  "onCreateCommand": {
+    "pwsh": "/home/codespace/.dotnet/dotnet tool install --global PowerShell"
+  }
 }
