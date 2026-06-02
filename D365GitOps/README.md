@@ -6,9 +6,9 @@ GitOps utilities for Dynamics 365 Finance and Operations.
 
 | Script | Description |
 |--------|-------------|
-| `MergeDriver/Merge-LabelFile.ps1` | Git merge driver and standalone sorter for AxLabel translation files |
-| `DeveloperSetup/Register-D365MergeDriver.ps1` | Registers the `d365fo-label` git merge driver in the local or global git config |
-| `DailyBuild/Prepare-DailyBuildBranch.ps1` | Builds and updates a daily-build branch by merging active pull requests to main |
+| `functions/MergeDriver/Merge-LabelFile.ps1` | Git merge driver and standalone sorter for AxLabel translation files |
+| `functions/DeveloperSetup/Register-D365MergeDriver.ps1` | Registers the `d365fo-label` git merge driver in the local or global git config |
+| `functions/DailyBuild/Prepare-DailyBuildBranch.ps1` | Builds and updates a daily-build branch by merging active pull requests to main |
 
 ## Installation
 
