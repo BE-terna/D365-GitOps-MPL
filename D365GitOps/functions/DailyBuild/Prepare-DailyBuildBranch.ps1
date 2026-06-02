@@ -17,6 +17,11 @@ param(
 	[switch]$SkipUnchangedPush
 )
 
+
+if ($MyInvocation.InvocationName -eq '.') {
+    return
+}
+
 $gitArgs = @(
 	'-c',
 	"http.extraheader=AUTHORIZATION: Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("PAT:$Pat")))"

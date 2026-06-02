@@ -67,7 +67,7 @@ jobs:
           TARGET_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'marketplace' }}
         run: |
           # Keep extension task script aligned with the module source script before packaging.
-          Copy-Item scripts/DailyBuild/Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1 -Force
+          Copy-Item D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1 -Force
 
           $isPublic = $env:TARGET_ENVIRONMENT -eq 'marketplace'
           [PSCustomObject]@{

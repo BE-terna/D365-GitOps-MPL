@@ -54,8 +54,8 @@ steps:
         if ("${{ parameters.skipUnchangedPush }}" -eq 'true') {
           $arguments += '-SkipUnchangedPush'
         }
-        # Assumes Prepare-DailyBuildBranch.ps1 is located at repository root.
-        $scriptPath = '$(Build.SourcesDirectory)/Prepare-DailyBuildBranch.ps1'
+        # Uses the source script from the module functions layout.
+        $scriptPath = '$(Build.SourcesDirectory)/D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1'
         if (-not (Test-Path -Path $scriptPath)) {
           throw "Script not found: $scriptPath"
         }

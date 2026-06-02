@@ -26,7 +26,7 @@ Register-D365MergeDriver -Global
 ### Dot-source directly (no module install required)
 
 ```powershell
-. ./scripts/DeveloperSetup/Register-D365MergeDriver.ps1
+. ./D365GitOps/functions/DeveloperSetup/Register-D365MergeDriver.ps1
 Register-D365MergeDriver
 ```
 

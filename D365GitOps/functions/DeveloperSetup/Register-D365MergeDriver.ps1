@@ -20,7 +20,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
     This file is a function-definition source.  It is dot-sourced by D365GitOps.psm1
     and can also be dot-sourced directly:
 
-        . ./scripts/DeveloperSetup/Register-D365MergeDriver.ps1
+        . ./D365GitOps/functions/DeveloperSetup/Register-D365MergeDriver.ps1
         Register-D365MergeDriver
 
 .PARAMETER Global
@@ -34,7 +34,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 .EXAMPLE
     # Dot-source and call directly:
-    . ./scripts/DeveloperSetup/Register-D365MergeDriver.ps1
+    . ./D365GitOps/functions/DeveloperSetup/Register-D365MergeDriver.ps1
     Register-D365MergeDriver -Global
 #>
 function Register-D365MergeDriver {

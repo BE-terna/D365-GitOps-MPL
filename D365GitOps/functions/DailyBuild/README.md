@@ -24,7 +24,7 @@ Invoke-PrepareDailyBuildBranch `
 ### Run the script directly
 
 ```powershell
-pwsh -File scripts/DailyBuild/Prepare-DailyBuildBranch.ps1 `
+pwsh -File D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1 `
     -OrganizationUri https://dev.azure.com/my-org `
     -Project         my-project `
     -RepositoryName  my-repo

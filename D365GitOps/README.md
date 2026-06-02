@@ -43,13 +43,13 @@ Register-D365MergeDriver -Global  # registers in ~/.gitconfig
 Or run the standalone script directly:
 
 ```powershell
-pwsh -File scripts/DeveloperSetup/Register-D365MergeDriver.ps1
+pwsh -File D365GitOps/functions/DeveloperSetup/Register-D365MergeDriver.ps1
 ```
 
 **Standalone / pipeline mode** (sort all label files without merging):
 
 ```powershell
-pwsh -File scripts/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $(Build.SourcesDirectory)
+pwsh -File D365GitOps/functions/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $(Build.SourcesDirectory)
 ```
 
 ### Daily build branch
@@ -57,7 +57,7 @@ pwsh -File scripts/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $(Build.SourcesDire
 Merges all active (non-draft, non-ignored) pull requests targeting `main` into a consolidated branch:
 
 ```powershell
-pwsh -File scripts/DailyBuild/Prepare-DailyBuildBranch.ps1 `
+pwsh -File D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1 `
   -OrganizationUri https://dev.azure.com/my-org `
   -Project my-project `
   -RepositoryName my-repo

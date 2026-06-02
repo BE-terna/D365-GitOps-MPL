@@ -67,11 +67,11 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          Update-ModuleManifest -Path ./scripts/D365GitOps.psd1 -ModuleVersion $env:VERSION
+          Update-ModuleManifest -Path ./D365GitOps/D365GitOps.psd1 -ModuleVersion $env:VERSION
 
       - name: Publish to PowerShell Gallery
         shell: pwsh
         env:
           NUGET_AUTH_TOKEN: ${{ steps.psgallery-key.outputs.api-key }}
         run: |
-          Publish-PSResource -Path ./scripts -Repository PSGallery -ApiKey $env:NUGET_AUTH_TOKEN -Verbose
+          Publish-PSResource -Path ./D365GitOps -Repository PSGallery -ApiKey $env:NUGET_AUTH_TOKEN -Verbose

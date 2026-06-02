@@ -29,7 +29,7 @@ sorts them alphabetically in-place.  Useful as a pipeline step to normalise file
 before committing:
 
 ```powershell
-pwsh -File scripts/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $env:BUILD_SOURCESDIRECTORY
+pwsh -File D365GitOps/functions/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $env:BUILD_SOURCESDIRECTORY
 ```
 
 ## Label file format
