@@ -5,6 +5,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 -->
 # D365-GitOps-MPL
 
+[![PowerShell Gallery - D365GitOps](https://img.shields.io/badge/PowerShell%20Gallery-D365GitOps-blue.svg)](https://www.powershellgallery.com/packages/D365GitOps)
+
+
 ## Azure DevOps Marketplace extension
 
 This repository now contains an Azure DevOps extension scaffold for `Prepare-DailyBuildBranch.ps1` under:
