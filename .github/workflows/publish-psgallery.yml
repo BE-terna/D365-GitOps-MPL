@@ -95,9 +95,6 @@ jobs:
           dotnet tool restore
           
           $signArgs = @(
-            "code"
-            "artifact-signing"
-            "**/*.ps*1"
             "--base-directory", (Get-Item -Path ./D365GitOps).FullName
             "--recurse-containers"
             "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
@@ -106,7 +103,13 @@ jobs:
             "--azure-credential-type", "azure-cli"
             "--verbosity", $env:TOOL_SIGN_VERBOSITY
           )
-          dotnet tool run sign -- @signArgs
+          dotnet tool run sign code artifact-signing **/*.ps*1 -- @signArgs
+
+          Push-Location D365GitOps
+          $fileCatalog = New-FileCatalog -CatalogVersion 2 .
+          Pop-Location
+
+          dotnet tool run sign code artifact-signing $fileCatalog.FullName -- @signArgs
 
       - name: Create PowerShell module package
         id: package
