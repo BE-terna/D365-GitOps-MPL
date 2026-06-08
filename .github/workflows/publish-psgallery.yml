@@ -86,6 +86,7 @@ jobs:
           trace: ${{ runner.debug == '1' }}
         
       - name: Publish to PowerShell Gallery
+        id: publish
         shell: pwsh
         env:
           POWERSHELLGALLERYAPIKEY: ${{ secrets.POWERSHELLGALLERYAPIKEY }}
@@ -94,22 +95,27 @@ jobs:
             Register-PSResourceRepository -Default
           }
           
-          Publish-PSResource -DestinationPath ./out -Path ./D365GitOps -Repository PSGallery -ApiKey $env:POWERSHELLGALLERYAPIKEY -Verbose
+          $artifactDir = Join-Path $env:RUNNER_TEMP artifacts
+          New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+
+          Publish-PSResource -DestinationPath $artifactDir -Path ./D365GitOps -Repository PSGallery -ApiKey $env:POWERSHELLGALLERYAPIKEY -Verbose
+          $publishedPackage = Get-ChildItem -Path $artifactDir -Filter 'D365GitOps.*.nupkg' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          "publishedPackage=$($publishedPackage.FullName)" >> $env:GITHUB_OUTPUT
       
       - name: Generate Generic Attestations
         uses: actions/attest@v4.1.0
         with:
-          subject-path: ./out/D365GitOps.*.nupkg
+          subject-path: ${{ steps.publish.outputs.publishedPackage }}
       
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
         with:
           name: D365GitOps
-          path: ./out/D365GitOps.*.nupkg
+          path: ${{ steps.publish.outputs.publishedPackage }}
       
       - name: Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          files: ./out/D365GitOps.*.nupkg
+          files: ${{ steps.publish.outputs.publishedPackage }}
           generate_release_notes: true
