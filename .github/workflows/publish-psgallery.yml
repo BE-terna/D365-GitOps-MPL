@@ -12,14 +12,14 @@ on:
       environment:
         description: 'Target environment'
         required: true
-        default: psgallery
+        default: 'PowerShell Gallery'
         type: choice
         options:
-          - psgallery
+          - 'PowerShell Gallery'
       runner:
         description: 'Runner to use'
         required: true
-        default: ubuntu-latest
+        default: windows-latest
         type: choice
         options:
           - ubuntu-latest
@@ -36,8 +36,8 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'ubuntu-latest' }}
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'psgallery' }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'windows-latest' }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'PowerShell Gallery' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -105,7 +105,6 @@ jobs:
       
       - name: Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        if: github.event_name == 'workflow_dispatch'
         with:
           tag_name: v${{ steps.version.outputs.version }}
           files: ./out/D365GitOps.*.nupkg
