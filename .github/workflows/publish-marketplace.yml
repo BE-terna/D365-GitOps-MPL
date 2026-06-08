@@ -66,8 +66,8 @@ jobs:
           EXTENSION_ID: ${{ vars.MARKETPLACE_EXTENSION_ID }}
           TARGET_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'marketplace' }}
         run: |
-          # Keep extension task script aligned with the root source script before packaging.
-          Copy-Item Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1 -Force
+          # Keep extension task script aligned with the module source script before packaging.
+          Copy-Item D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Prepare-DailyBuildBranch.ps1 -Force
 
           $isPublic = $env:TARGET_ENVIRONMENT -eq 'marketplace'
           [PSCustomObject]@{
@@ -89,7 +89,7 @@ jobs:
 
       - name: Azure login using OIDC
         id: azure-login
-        uses: azure/login@v3
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}

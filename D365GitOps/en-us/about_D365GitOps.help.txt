@@ -1,0 +1,16 @@
+TOPIC
+    about_D365GitOps
+
+SHORT DESCRIPTION
+    D365GitOps module overview.
+
+LONG DESCRIPTION
+    D365GitOps provides utilities for Dynamics 365 FO GitOps automation,
+    including AxLabel merge-driver registration, label merge/sort operations,
+    and daily-build branch preparation for Azure DevOps pull requests.
+
+KEYWORDS
+    D365GitOps
+    GitOps
+    Azure DevOps
+    PowerShell module
