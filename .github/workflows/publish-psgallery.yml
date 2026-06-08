@@ -74,18 +74,40 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
-      - name: Artifact Signing PowerShell
+      - name: Artifact Signing PowerShell (old)
         uses: Azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
-        if: ${{ runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        if: ${{ false && runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
         with:
           endpoint: ${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}
           signing-account-name: ${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}
           certificate-profile-name: ${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
           files-folder: ./D365GitOps
-          files-folder-filter: 'ps1,psm1,psd1,nupkg'
+          files-folder-filter: 'ps1,psm1,psd1'
           files-folder-recurse: true
           trace: ${{ runner.debug == '1' }}
-        
+
+      - name: Artifact Signing PowerShell
+        shell: pwsh
+        if: ${{ runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        env:
+          TOOL_SIGN_VERBOSITY: ${{ case(runner.debug == '1', 'debug', 'information') }}
+        run: |
+          dotnet tool restore
+          
+          $signArgs = @(
+            "code"
+            "artifact-signing"
+            "**/*.ps*1"
+            "--base-directory", "D365GitOps"
+            "--recurse-containers"
+            "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
+            "--artifact-signing-account", "${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}"
+            "--artifact-signing-certificate-profile", "${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}"
+            "--azure-credential-type", "azure-cli"
+            "--verbosity", $env:TOOL_SIGN_VERBOSITY
+          )
+          dotnet tool run sign -- @signArgs
+
       - name: Create PowerShell module package
         id: package
         shell: pwsh
@@ -116,6 +138,7 @@ jobs:
             "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
             "--artifact-signing-account", "${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}"
             "--artifact-signing-certificate-profile", "${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}"
+            "--azure-credential-type", "azure-cli"
             "--verbosity", $env:TOOL_SIGN_VERBOSITY
           )
           dotnet tool run sign -- @signArgs
