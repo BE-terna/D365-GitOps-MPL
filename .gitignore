@@ -431,4 +431,4 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-D365GitOps/catalog.cat
+D365GitOps/*.cat

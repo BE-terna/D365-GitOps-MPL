@@ -106,7 +106,10 @@ jobs:
           dotnet tool run sign code artifact-signing **/*.ps*1 -- @signArgs
 
           Push-Location D365GitOps
-          $fileCatalog = New-FileCatalog -CatalogVersion 2 .
+          if (Test-Path -Path D365GitOps.cat) {
+            Remove-Item -Path D365GitOps.cat -Force
+          }
+          $fileCatalog = New-FileCatalog -CatalogVersion 2 -CatalogFilePath D365GitOps.cat
           Pop-Location
 
           dotnet tool run sign code artifact-signing $fileCatalog.FullName -- @signArgs
