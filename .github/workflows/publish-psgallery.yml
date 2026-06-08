@@ -98,7 +98,7 @@ jobs:
             "code"
             "artifact-signing"
             "**/*.ps*1"
-            "--base-directory", "D365GitOps"
+            "--base-directory", (Get-Item -Path ./D365GitOps).FullName
             "--recurse-containers"
             "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
             "--artifact-signing-account", "${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}"
