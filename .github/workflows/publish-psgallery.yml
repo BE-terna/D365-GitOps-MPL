@@ -90,6 +90,10 @@ jobs:
         env:
           POWERSHELLGALLERYAPIKEY: ${{ secrets.POWERSHELLGALLERYAPIKEY }}
         run: |
+          if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSResourceRepository -Default
+          }
+          
           Publish-PSResource -DestinationPath ./out -Path ./D365GitOps -Repository PSGallery -ApiKey $env:POWERSHELLGALLERYAPIKEY -Verbose
       
       - name: Generate Generic Attestations
