@@ -1,0 +1,14 @@
+{
+  "$schema": "https://www.schemastore.org/dotnet-tools.json",
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "sign": {
+      "version": "0.9.1-beta.26301.2",
+      "commands": [
+        "sign"
+      ],
+      "rollForward": false
+    }
+  }
+}
