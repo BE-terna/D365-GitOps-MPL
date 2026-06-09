@@ -1,7 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-name: publish-powershell-gallery
+name: 'Publish: PowerShell Gallery'
 
 on:
   workflow_dispatch:
@@ -12,14 +12,14 @@ on:
       environment:
         description: 'Target environment'
         required: true
-        default: psgallery
+        default: 'PowerShell Gallery'
         type: choice
         options:
-          - psgallery
+          - 'PowerShell Gallery'
       runner:
         description: 'Runner to use'
         required: true
-        default: ubuntu-latest
+        default: windows-latest
         type: choice
         options:
           - ubuntu-latest
@@ -36,8 +36,8 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'ubuntu-latest' }}
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'psgallery' }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'windows-latest' }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'PowerShell Gallery' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -66,46 +66,108 @@ jobs:
           Update-ModuleManifest -Path ./D365GitOps/D365GitOps.psd1 -ModuleVersion $env:VERSION
 
       - name: Azure login using OIDC # Login to AZ CLI used for artifact signing
+        id: azureLogin
         uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
-        if: runner.os == 'Windows'
+        if: ${{ runner.os == 'Windows'  && vars.AZURE_CLIENT_ID && vars.AZURE_TENANT_ID }} # AZ login is only needed for artifact signing, which is currently only supported on Windows
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
-      - name: Artifact Signing
-        uses: Azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
-        if: runner.os == 'Windows'
-        with:
-          endpoint: ${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}
-          signing-account-name: ${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}
-          certificate-profile-name: ${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
-          files-folder: ./D365GitOps
-          files-folder-recurse: true
-          trace: ${{ runner.debug == '1' }}
-        
+      - name: Artifact Signing PowerShell
+        shell: pwsh
+        if: ${{ runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        env:
+          TOOL_SIGN_VERBOSITY: ${{ case(runner.debug == '1', 'debug', 'information') }}
+        run: |
+          dotnet tool restore
+          
+          $signArgs = @(
+            "--base-directory", (Get-Item -Path ./D365GitOps).FullName
+            "--recurse-containers"
+            "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
+            "--artifact-signing-account", "${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}"
+            "--artifact-signing-certificate-profile", "${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}"
+            "--azure-credential-type", "azure-cli"
+            "--verbosity", $env:TOOL_SIGN_VERBOSITY
+          )
+          dotnet tool run sign code artifact-signing **/*.ps*1 -- @signArgs
+
+          if ($env:FORCE_CREATE_CATALOG -eq 'true') {
+            Push-Location D365GitOps
+            $catalogFile = "catalog.cat"
+            if (Test-Path -Path $catalogFile) {
+              Remove-Item -Path $catalogFile -Force
+            }
+            $fileCatalog = New-FileCatalog -CatalogVersion 2 -CatalogFilePath $catalogFile
+            Pop-Location
+            dotnet tool run sign code artifact-signing $fileCatalog.FullName -- @signArgs
+          }
+
+      - name: Create PowerShell module package
+        id: package
+        shell: pwsh
+        run: |
+          $artifactDir = Join-Path $env:RUNNER_TEMP artifacts
+          New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+
+          # Create the package (.nupkg) into the artifacts directory
+          $createdPackage = Compress-PSResource -PassThru -DestinationPath $artifactDir -Path ./D365GitOps -Verbose
+
+          "Package created: $($createdPackage.FullName)"
+          "createdPackage=$($createdPackage.FullName)" >> $env:GITHUB_OUTPUT
+      
+      - name: Sign NuGet Package
+        shell: pwsh
+        if: ${{ runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        env:
+          CREATEDPACKAGE: ${{ steps.package.outputs.createdPackage }}
+          TOOL_SIGN_VERBOSITY: ${{ case(runner.debug == '1', 'debug', 'information') }}
+        run: |
+          dotnet tool restore
+          
+          $signArgs = @(
+            "code"
+            "artifact-signing"
+            $env:CREATEDPACKAGE
+            "--application-name", "D365GitOps"
+            "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
+            "--artifact-signing-account", "${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}"
+            "--artifact-signing-certificate-profile", "${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}"
+            "--azure-credential-type", "azure-cli"
+            "--verbosity", $env:TOOL_SIGN_VERBOSITY
+          )
+          dotnet tool run sign -- @signArgs
+      
       - name: Publish to PowerShell Gallery
+        id: publishToGallery
         shell: pwsh
         env:
           POWERSHELLGALLERYAPIKEY: ${{ secrets.POWERSHELLGALLERYAPIKEY }}
+          CREATEDPACKAGE: ${{ steps.package.outputs.createdPackage }}
         run: |
-          Publish-PSResource -DestinationPath ./out -Path ./D365GitOps -Repository PSGallery -ApiKey $env:POWERSHELLGALLERYAPIKEY -Verbose
-      
+          if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSResourceRepository -Default
+          }
+          
+          # Publish the created package to PSGallery
+          Publish-PSResource -NupkgPath $env:CREATEDPACKAGE -Repository PSGallery -ApiKey $env:POWERSHELLGALLERYAPIKEY -Verbose
+
       - name: Generate Generic Attestations
         uses: actions/attest@v4.1.0
         with:
-          subject-path: ./out/D365GitOps.*.nupkg
+          subject-path: ${{ steps.package.outputs.createdPackage }}
       
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
         with:
           name: D365GitOps
-          path: ./out/D365GitOps.*.nupkg
+          path: ${{ steps.package.outputs.createdPackage }}
       
       - name: Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ steps.version.outputs.version }}
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          files: ./out/D365GitOps.*.nupkg
+          files: ${{ steps.package.outputs.createdPackage }}
           generate_release_notes: true
