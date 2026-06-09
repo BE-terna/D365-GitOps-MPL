@@ -74,18 +74,6 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
-      - name: Artifact Signing PowerShell (old)
-        uses: Azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
-        if: ${{ false && runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
-        with:
-          endpoint: ${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}
-          signing-account-name: ${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}
-          certificate-profile-name: ${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
-          files-folder: ./D365GitOps
-          files-folder-filter: 'ps1,psm1,psd1'
-          files-folder-recurse: true
-          trace: ${{ runner.debug == '1' }}
-
       - name: Artifact Signing PowerShell
         shell: pwsh
         if: ${{ runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
@@ -107,10 +95,11 @@ jobs:
 
           if ($env:FORCE_CREATE_CATALOG -eq 'true') {
             Push-Location D365GitOps
-            if (Test-Path -Path D365GitOps.cat) {
-              Remove-Item -Path D365GitOps.cat -Force
+            $catalogFile = "catalog.cat"
+            if (Test-Path -Path $catalogFile) {
+              Remove-Item -Path $catalogFile -Force
             }
-            $fileCatalog = New-FileCatalog -CatalogVersion 2 -CatalogFilePath catalog.cat
+            $fileCatalog = New-FileCatalog -CatalogVersion 2 -CatalogFilePath $catalogFile
             Pop-Location
             dotnet tool run sign code artifact-signing $fileCatalog.FullName -- @signArgs
           }
@@ -177,6 +166,7 @@ jobs:
       
       - name: Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        if: ${{ steps.version.outputs.version }}
         with:
           tag_name: v${{ steps.version.outputs.version }}
           files: ${{ steps.package.outputs.createdPackage }}
