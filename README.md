@@ -10,13 +10,13 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 ## Azure DevOps Marketplace extension
 
-This repository now contains an Azure DevOps extension scaffold for `Prepare-DailyBuildBranch.ps1` under:
+This repository now contains an Azure DevOps extension scaffold for `Merge-DailyBuildBranch.ps1` under:
 
 - `azure-devops-extension/vss-extension.json`
 - `azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json`
 
 Before publishing, configure the environment variables used by the publish workflow (`MARKETPLACE_PUBLISHER_ID` and `MARKETPLACE_EXTENSION_ID`).
-`D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1` is the source of truth; the publish workflow copies it into the extension task folder during packaging.
+`D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1` is the source of truth; the publish workflow copies it into the extension task folder during packaging.
 The task GUID in `azure-devops-extension/tasks/PrepareDailyBuildBranch/task.json` must remain unique if this task is forked or republished under another extension.
 
 ## Azure DevOps pipeline example

@@ -11,9 +11,9 @@ GitOps utilities for Dynamics 365 Finance and Operations.
 
 | Script | Description |
 |--------|-------------|
-| `functions/MergeDriver/Merge-LabelFile.ps1` | Git merge driver and standalone sorter for AxLabel translation files |
-| `functions/DeveloperSetup/Register-D365MergeDriver.ps1` | Registers the `d365fo-label` git merge driver in the local or global git config |
-| `functions/DailyBuild/Prepare-DailyBuildBranch.ps1` | Builds and updates a daily-build branch by merging active pull requests to main |
+| `functions/MergeDrivers/Merge-D365LabelFile.ps1` | Git merge driver and standalone sorter for AxLabel translation files |
+| `functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1` | Registers the `d365fo-label` git merge driver in the local or global git config |
+| `functions/DailyBuild/Merge-DailyBuildBranch.ps1` | Builds and updates a daily-build branch by merging active pull requests to main |
 
 ## Installation
 
@@ -33,7 +33,7 @@ The merge driver performs a 3-way merge of AxLabel translation files, producing 
 
 ```gitattributes
 # Assign the custom merge driver to AxLabel translation files.
-# The driver must be registered in git config before use; see Register-D365MergeDriver.
+# The driver must be registered in git config before use; see Register-D365LabelFileMergeDriver.
 **/AxLabelFile/LabelResources/*/*.label.txt merge=d365fo-label
 ```
 
@@ -41,20 +41,20 @@ The merge driver performs a 3-way merge of AxLabel translation files, producing 
 
 ```powershell
 Import-Module D365GitOps
-Register-D365MergeDriver          # registers in local .git/config
-Register-D365MergeDriver -Global  # registers in ~/.gitconfig
+Register-D365LabelFileMergeDriver          # registers in local .git/config
+Register-D365LabelFileMergeDriver -Global  # registers in ~/.gitconfig
 ```
 
 Or run the standalone script directly:
 
 ```powershell
-pwsh -File D365GitOps/functions/DeveloperSetup/Register-D365MergeDriver.ps1
+pwsh -File D365GitOps/functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1
 ```
 
 **Standalone / pipeline mode** (sort all label files without merging):
 
 ```powershell
-pwsh -File D365GitOps/functions/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $(Build.SourcesDirectory)
+pwsh -File D365GitOps/functions/MergeDrivers/Merge-D365LabelFile.ps1 -RepoRoot $(Build.SourcesDirectory)
 ```
 
 ### Daily build branch
@@ -62,7 +62,7 @@ pwsh -File D365GitOps/functions/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $(Buil
 Merges all active (non-draft, non-ignored) pull requests targeting `main` into a consolidated branch:
 
 ```powershell
-pwsh -File D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1 `
+pwsh -File D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1 `
   -OrganizationUri https://dev.azure.com/my-org `
   -Project my-project `
   -RepositoryName my-repo

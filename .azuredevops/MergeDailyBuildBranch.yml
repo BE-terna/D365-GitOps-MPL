@@ -54,12 +54,22 @@ steps:
         if ("${{ parameters.skipUnchangedPush }}" -eq 'true') {
           $arguments += '-SkipUnchangedPush'
         }
-        # Uses the source script from the module functions layout.
-        $scriptPath = '$(Build.SourcesDirectory)/D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1'
-        if (-not (Test-Path -Path $scriptPath)) {
-          throw "Script not found: $scriptPath"
+        $localScriptPath = '$(Build.SourcesDirectory)/D365GitOps/Merge-DailyBuildBranch.ps1'
+        if (Test-Path -Path $localScriptPath) {
+          # Prefer a consumer-provided local script when the repository contains it.
+          & $localScriptPath @arguments
         }
-        & $scriptPath @arguments
+        else {
+          # Fall back to the published PowerShell Gallery module.
+          if (-not (Get-Command -Name Install-PSResource -ErrorAction Ignore)) {
+            Install-Module Microsoft.PowerShell.PSResourceGet -Scope CurrentUser -Force -AllowClobber
+          }
+          if (-not (Get-Module -ListAvailable -Name D365GitOps)) {
+            Install-PSResource D365GitOps -Repository PSGallery -Scope CurrentUser -TrustRepository
+          }
+          Import-Module D365GitOps -Force
+          Merge-DailyBuildBranch @arguments
+        }
     env:
       DEVOPS_PAT: $(System.AccessToken)
       AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
