@@ -17,11 +17,8 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
     The driver path is resolved relative to this file's location so it works whether
     the module is installed from the PowerShell Gallery or used directly from source.
 
-    This file is a function-definition source.  It is dot-sourced by D365GitOps.psm1
-    and can also be dot-sourced directly:
-
-        . ./D365GitOps/functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1
-        Register-D365LabelFileMergeDriver
+    This file is an advanced script. When importing the D365GitOps module, it is exposed as
+    Register-D365LabelFileMergeDriver.
 
 .PARAMETER Global
     When specified, the merge driver is registered in the user's global git config
@@ -31,11 +28,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
     # Via the D365GitOps module (recommended):
     Import-Module D365GitOps
     Register-D365LabelFileMergeDriver
-
-.EXAMPLE
-    # Dot-source and call directly:
-    . ./D365GitOps/functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1
-    Register-D365LabelFileMergeDriver -Global
 #>
 [CmdletBinding(DefaultParameterSetName = "CustomCommand")]
 param(
@@ -44,7 +36,7 @@ param(
     [parameter(ParameterSetName = "CustomCommand", Position = 0)]
     [string]$MergeLabelCommandName = 'Merge-D365LabelFile'
     ,
-    [parameter(ParameterSetName = "CustomScriptPath", Position = 0)]
+    [parameter(ParameterSetName = "CustomScriptPath")]
     [string]$MergeLabelScriptPath = '../MergeDrivers/Merge-D365LabelFile.ps1'
 
 )
@@ -62,7 +54,7 @@ else {
         $resolvedScriptPath = $MergeLabelScriptPath
     }
     else {
-        $resolvedScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) $MergeLabelScriptPath
+        $resolvedScriptPath = Join-Path $PSScriptRoot $MergeLabelScriptPath
     }
     if (-not (Test-Path -LiteralPath $resolvedScriptPath)) {
         throw "Merge-D365LabelFile.ps1 not found at expected path: $resolvedScriptPath"
