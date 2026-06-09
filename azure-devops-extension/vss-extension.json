@@ -11,6 +11,9 @@
   "categories": [
     "Azure Repos"
   ],
+  "icons": {
+    "default": "azure-devops-extension/tasks/PrepareDailyBuildBranch/icon.png"
+  },
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
