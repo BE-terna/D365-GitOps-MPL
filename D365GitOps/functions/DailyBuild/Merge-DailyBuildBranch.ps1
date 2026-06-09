@@ -202,7 +202,7 @@ $repositoryId = (az repos show --repository "$RepositoryName" --query id --outpu
 
 Invoke-Git @('fetch', 'origin', 'main')
 Invoke-Git @('checkout', '-B', $DailyBuildBranch, 'origin/main')
-$mergeLabelScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'MergeDriver/Merge-LabelFile.ps1'
+$mergeLabelScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'MergeDrivers/Merge-D365LabelFile.ps1'
 if (Test-Path -Path $mergeLabelScriptPath) {
 	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File `"$mergeLabelScriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
 }

@@ -28,10 +28,10 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
     Register the merge driver in git config once per clone (or in a pipeline step):
         git config merge.d365fo-label.name   "AxLabel file merger"
-        git config merge.d365fo-label.driver "pwsh -File D365GitOps/functions/MergeDriver/Merge-LabelFile.ps1 -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P"
+        git config merge.d365fo-label.driver "pwsh -File D365GitOps/functions/MergeDrivers/Merge-D365LabelFile.ps1 -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P"
 
     Alternatively, install the D365GitOps module and run:
-        Register-D365MergeDriver
+        Register-D365LabelFileMergeDriver
 
 .PARAMETER Base
     [Merge-driver] Ancestor (base) version of the file. Supplied as %O by git.
@@ -56,7 +56,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 .EXAMPLE
     # Run from a pipeline to sort every label file in the repository:
-    pwsh -File D365GitOps/functions/MergeDriver/Merge-LabelFile.ps1 -RepoRoot $(Build.SourcesDirectory)
+    pwsh -File D365GitOps/functions/MergeDrivers/Merge-D365LabelFile.ps1 -RepoRoot $(Build.SourcesDirectory)
 #>
 
 [CmdletBinding(DefaultParameterSetName = 'Standalone')]

@@ -12,7 +12,7 @@ all active, non-draft pull requests targeting `main`.
 
 | File | Description |
 |------|-------------|
-| `Prepare-DailyBuildBranch.ps1` | Fetches active PRs, sorts them by priority label, merges each into the daily-build branch and reports status back to Azure DevOps |
+| `Merge-DailyBuildBranch.ps1` | Fetches active PRs, sorts them by priority label, merges each into the daily-build branch and reports status back to Azure DevOps |
 
 ## Usage
 
@@ -20,7 +20,7 @@ all active, non-draft pull requests targeting `main`.
 
 ```powershell
 Import-Module D365GitOps
-Invoke-PrepareDailyBuildBranch `
+Merge-DailyBuildBranch `
     -OrganizationUri https://dev.azure.com/my-org `
     -Project         my-project `
     -RepositoryName  my-repo
@@ -29,7 +29,7 @@ Invoke-PrepareDailyBuildBranch `
 ### Run the script directly
 
 ```powershell
-pwsh -File D365GitOps/functions/DailyBuild/Prepare-DailyBuildBranch.ps1 `
+pwsh -File D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1 `
     -OrganizationUri https://dev.azure.com/my-org `
     -Project         my-project `
     -RepositoryName  my-repo

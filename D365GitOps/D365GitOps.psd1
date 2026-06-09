@@ -23,9 +23,9 @@ Description = 'GitOps utilities for Dynamics 365 Finance and Operations: AxLabel
 PowerShellVersion = '7.0'
 
 FunctionsToExport = @(
-    'Register-D365MergeDriver',
-    'Invoke-PrepareDailyBuildBranch',
-    'Invoke-MergeLabelFile'
+    'Merge-DailyBuildBranch'
+    'Merge-D365LabelFile'
+    'Register-D365LabelFileMergeDriver'
 )
 
 CmdletsToExport = @()
@@ -36,11 +36,9 @@ AliasesToExport = @()
 
 FileList = @(
     'D365GitOps.psm1',
-    'functions/Invoke-MergeLabelFile.ps1',
-    'functions/Invoke-PrepareDailyBuildBranch.ps1',
-    'functions/DeveloperSetup/Register-D365MergeDriver.ps1',
-    'functions/MergeDriver/Merge-LabelFile.ps1',
-    'functions/DailyBuild/Prepare-DailyBuildBranch.ps1'
+    'functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1',
+    'functions/MergeDrivers/Merge-D365LabelFile.ps1',
+    'functions/DailyBuild/Merge-DailyBuildBranch.ps1'
 )
 
 PrivateData = @{

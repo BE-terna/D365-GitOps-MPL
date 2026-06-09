@@ -4,7 +4,7 @@
   "name": "PrepareDailyBuildBranch",
   "friendlyName": "Prepare Daily Build Branch",
   "description": "Builds and updates a daily-build branch by merging active pull requests to main.",
-  "helpMarkDown": "Uses Prepare-DailyBuildBranch.ps1 to create and push a consolidated daily-build branch.",
+  "helpMarkDown": "Uses Merge-DailyBuildBranch.ps1 to create and push a consolidated daily-build branch.",
   "category": "Utility",
   "author": "BE-terna",
   "version": {
@@ -79,7 +79,7 @@
   ],
   "execution": {
     "PowerShell3": {
-      "target": "Prepare-DailyBuildBranch.ps1",
+      "target": "Merge-DailyBuildBranch.ps1",
       "argumentFormat": "-organizationUri \"$(organizationUri)\" -project \"$(project)\" -repositoryName \"$(repositoryName)\" -dailyBuildBranch \"$(dailyBuildBranch)\" -mergeStrategy \"$(mergeStrategy)\" -defaultPriority \"$(defaultPriority)\" -skipUnchangedPush:$(skipUnchangedPush)"
     }
   }

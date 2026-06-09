@@ -11,7 +11,7 @@ Scripts for configuring a developer workstation to use D365GitOps tooling.
 
 | File | Description |
 |------|-------------|
-| `Register-D365MergeDriver.ps1` | Defines the `Register-D365MergeDriver` function that registers the `d365fo-label` git merge driver |
+| `Register-D365LabelFileMergeDriver.ps1` | Defines the `Register-D365LabelFileMergeDriver` function that registers the `d365fo-label` git merge driver |
 
 ## Usage
 
@@ -22,17 +22,17 @@ Install-PSResource D365GitOps
 Import-Module D365GitOps
 
 # Register for the current repository only
-Register-D365MergeDriver
+Register-D365LabelFileMergeDriver
 
 # Register globally for all repositories on this machine
-Register-D365MergeDriver -Global
+Register-D365LabelFileMergeDriver -Global
 ```
 
 ### Dot-source directly (no module install required)
 
 ```powershell
-. ./D365GitOps/functions/DeveloperSetup/Register-D365MergeDriver.ps1
-Register-D365MergeDriver
+. ./D365GitOps/functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1
+Register-D365LabelFileMergeDriver
 ```
 
 ## What it does
@@ -41,10 +41,10 @@ Writes the following entries to git config (`--local` or `--global`):
 
 ```
 merge.d365fo-label.name   = AxLabel file merger
-merge.d365fo-label.driver = pwsh -File "<path>/Merge-LabelFile.ps1" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P
+merge.d365fo-label.driver = pwsh -File "<path>/Merge-D365LabelFile.ps1" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P
 ```
 
-The driver path is resolved to `Merge-LabelFile.ps1` relative to this file's
+The driver path is resolved to `Merge-D365LabelFile.ps1` relative to this file's
 installed location, so it works identically whether installed from the PowerShell
 Gallery or used directly from source.
 
