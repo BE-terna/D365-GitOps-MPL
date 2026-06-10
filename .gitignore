@@ -432,3 +432,5 @@ FodyWeavers.xsd
 *.msm
 *.msp
 D365GitOps/*.cat
+*.vsix
+*.zip

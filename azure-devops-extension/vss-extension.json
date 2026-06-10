@@ -1,38 +1,80 @@
 {
   "$schema": "https://www.schemastore.org/vss-extension.json",
   "manifestVersion": 1,
-  "id": "d365-gitops",
+  "id": "D365-GitOps",
   "publisher": "REPLACE-WITH-YOUR-PUBLISHER-ID",
   "version": "0.1.0",
   "name": "D365 GitOps",
   "description": "Prepare and maintain a daily-build branch from active pull requests.",
+  "tags": [
+    "gitops",
+    "d365fo",
+    "dynamics365",
+    "financeandoperations",
+    "finance",
+    "operations"
+  ],
   "public": false,
   "baseUri": "https://github.com/BE-terna/D365-GitOps",
-  "categories": [
-    "Azure Repos"
+  "repository": {
+    "type": "git",
+    "uri": "https://github.com/BE-terna/D365-GitOps.git"
+  },
+  "badges": [
+    {
+      "uri": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-psgallery.yml/badge.svg",
+      "href": "https://github.com/BE-terna/D365-GitOps-MPL/",
+      "description": "GitHub"
+    },
+    {
+      "uri": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-psgallery.yml/badge.svg?event=release",
+      "href": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-psgallery.yml",
+      "description": "GH-Release"
+    },
+    {
+      "uri": "https://img.shields.io/github/v/release/BE-terna/D365-GitOps-MPL",
+      "href": "https://github.com/BE-terna/D365-GitOps-MPL/releases",
+      "description": "Release"
+    },
+    {
+      "uri": "https://img.shields.io/github/license/BE-terna/D365-GitOps-MPL",
+      "href": "https://github.com/BE-terna/D365-GitOps-MPL/blob/main/LICENSE",
+      "description": "License: MPL-2.0"
+    }
   ],
+  "categories": [
+    "Azure Pipelines"
+  ],
+  "icons": {
+    "default": "images/icon.png",
+    "large": "images/icon-large.png"
+  },
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
+    },
+    {
+      "id": "Microsoft.TeamFoundation.Server"
     }
   ],
   "files": [
     {
-      "path": "azure-devops-extension/tasks/PrepareDailyBuildBranch"
+      "path": "tasks/Merge-DailyBuildBranch"
     },
     {
-      "path": "../LICENSE"
+      "path": "../LICENSE",
+      "packagePath": "LICENSE"
     }
   ],
   "contributions": [
     {
-      "id": "prepare-daily-build-branch-task",
+      "id": "Merge-DailyBuildBranch",
       "type": "ms.vss-distributed-task.task",
       "targets": [
         "ms.vss-distributed-task.tasks"
       ],
       "properties": {
-        "name": "azure-devops-extension/tasks/PrepareDailyBuildBranch"
+        "name": "tasks/Merge-DailyBuildBranch"
       }
     }
   ]

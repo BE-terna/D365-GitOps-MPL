@@ -1,5 +1,5 @@
 {
   "json.schemaDownload.trustedDomains": {
-    "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/": true
+    "https://raw.githubusercontent.com/microsoft/azure-pipelines-task-lib/": true,
   }
 }

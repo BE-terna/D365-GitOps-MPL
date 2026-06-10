@@ -1,0 +1,86 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+name: 'Publish: Release'
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer version (for example 1.2.3)'
+        required: true
+      marketplace_environment:
+        description: 'Marketplace target environment'
+        required: true
+        default: marketplace-preview
+        type: choice
+        options:
+          - marketplace-preview
+          - marketplace
+      package_runner:
+        description: 'Runner for package/sign stage'
+        required: true
+        default: windows-latest
+        type: choice
+        options:
+          - ubuntu-latest
+          - windows-latest
+  release:
+    types:
+      - published
+
+permissions:
+  artifact-metadata: write
+  attestations: write
+  contents: write
+  id-token: write
+
+jobs:
+  package:
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.package_runner || 'windows-latest' }}
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Package and prepare artifacts
+        id: package
+        uses: ./.github/actions/package-release
+        with:
+          version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
+          marketplace-environment: ${{ github.event_name == 'workflow_dispatch' && inputs.marketplace_environment || 'marketplace' }}
+          marketplace-extension-id: ${{ vars.MARKETPLACE_EXTENSION_ID }}
+          marketplace-publisher-id: ${{ vars.MARKETPLACE_PUBLISHER_ID }}
+          azure-client-id: ${{ vars.AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          artifact-signing-endpoint: ${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}
+          artifact-signing-account: ${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}
+          artifact-signing-certificate-profile: ${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+
+  publish-psgallery:
+    runs-on: windows-latest
+    needs:
+      - package
+    environment: PowerShell Gallery
+    steps:
+      - name: Publish package to PowerShell Gallery
+        uses: ./.github/actions/publish-psgallery
+        env:
+          POWERSHELLGALLERYAPIKEY: ${{ secrets.POWERSHELLGALLERYAPIKEY }}
+        with:
+          artifact-name: d365gitops-psgallery-package
+
+  publish-marketplace:
+    runs-on: ubuntu-latest
+    needs:
+      - package
+      - publish-psgallery
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.marketplace_environment || 'marketplace' }}
+    steps:
+      - name: Publish extension to Marketplace
+        uses: ./.github/actions/publish-marketplace
+        with:
+          artifact-name: d365gitops-marketplace-package
+          azure-client-id: ${{ vars.AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
