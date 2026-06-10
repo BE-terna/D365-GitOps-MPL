@@ -1,0 +1,291 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+name: 'Publish: Release'
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer version (for example 1.2.3)'
+        required: true
+      marketplace_environment:
+        description: 'Marketplace target environment'
+        required: true
+        default: marketplace-preview
+        type: choice
+        options:
+          - marketplace-preview
+          - marketplace
+      package_runner:
+        description: 'Runner for package/sign stage'
+        required: true
+        default: windows-latest
+        type: choice
+        options:
+          - ubuntu-latest
+          - windows-latest
+  release:
+    types:
+      - published
+
+permissions:
+  artifact-metadata: write
+  attestations: write
+  contents: write
+  id-token: write
+
+jobs:
+  package:
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.package_runner || 'windows-latest' }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    env:
+      TARGET_MARKETPLACE_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.marketplace_environment || 'marketplace' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '>=22'
+
+      - name: Install tooling
+        run: npm install --global tfx-cli@0.23.1
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            RAW_TAG='${{ github.event.release.tag_name }}'
+            VERSION="${RAW_TAG#v}"
+          else
+            VERSION='${{ inputs.version }}'
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must be strict semver (x.y.z), got: $VERSION" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set module version
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          Update-ModuleManifest -Path ./D365GitOps/D365GitOps.psd1 -ModuleVersion $env:VERSION
+
+      - name: Prepare marketplace extension manifest overrides
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          EXTENSION_ID: ${{ vars.MARKETPLACE_EXTENSION_ID }}
+          TARGET_ENVIRONMENT: ${{ env.TARGET_MARKETPLACE_ENVIRONMENT }}
+        run: |
+          # Keep extension task script aligned with the module source script before packaging.
+          Copy-Item D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Merge-DailyBuildBranch.ps1 -Force
+
+          $isPublic = $env:TARGET_ENVIRONMENT -eq 'marketplace'
+          [PSCustomObject]@{
+            id = $env:EXTENSION_ID
+            version = $env:VERSION
+            public = $isPublic
+          } | ConvertTo-Json | Set-Content overrides.json -Encoding UTF8
+
+      - name: Azure login using OIDC
+        id: azureLogin
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        if: ${{ runner.os == 'Windows' && vars.AZURE_CLIENT_ID && vars.AZURE_TENANT_ID }}
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Artifact Signing PowerShell
+        shell: pwsh
+        if: ${{ runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        env:
+          TOOL_SIGN_VERBOSITY: ${{ case(runner.debug == '1', 'debug', 'information') }}
+        run: |
+          dotnet tool restore
+
+          $signArgs = @(
+            "--base-directory", (Get-Item -Path ./D365GitOps).FullName
+            "--recurse-containers"
+            "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
+            "--artifact-signing-account", "${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}"
+            "--artifact-signing-certificate-profile", "${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}"
+            "--azure-credential-type", "azure-cli"
+            "--verbosity", $env:TOOL_SIGN_VERBOSITY
+          )
+          dotnet tool run sign code artifact-signing **/*.ps*1 -- @signArgs
+
+          if ($env:FORCE_CREATE_CATALOG -eq 'true') {
+            Push-Location D365GitOps
+            $catalogFile = "catalog.cat"
+            if (Test-Path -Path $catalogFile) {
+              Remove-Item -Path $catalogFile -Force
+            }
+            $fileCatalog = New-FileCatalog -CatalogVersion 2 -CatalogFilePath $catalogFile
+            Pop-Location
+            dotnet tool run sign code artifact-signing $fileCatalog.FullName -- @signArgs
+          }
+
+      - name: Create PowerShell module package
+        id: modulePackage
+        shell: pwsh
+        run: |
+          $artifactDir = Join-Path $env:RUNNER_TEMP artifacts
+          New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+
+          $createdPackage = Compress-PSResource -PassThru -DestinationPath $artifactDir -Path ./D365GitOps -Verbose
+
+          "Package created: $($createdPackage.FullName)"
+          "createdPackage=$($createdPackage.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Sign NuGet package
+        shell: pwsh
+        if: ${{ runner.os == 'Windows' && steps.azureLogin.outcome == 'success' && vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        env:
+          CREATEDPACKAGE: ${{ steps.modulePackage.outputs.createdPackage }}
+          TOOL_SIGN_VERBOSITY: ${{ case(runner.debug == '1', 'debug', 'information') }}
+        run: |
+          dotnet tool restore
+
+          $signArgs = @(
+            "code"
+            "artifact-signing"
+            $env:CREATEDPACKAGE
+            "--application-name", "D365GitOps"
+            "--artifact-signing-endpoint", "${{ vars.AZURE_ARTIFACT_SIGNING_ENDPOINT }}"
+            "--artifact-signing-account", "${{ vars.AZURE_ARTIFACT_SIGNING_ACCOUNT }}"
+            "--artifact-signing-certificate-profile", "${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}"
+            "--azure-credential-type", "azure-cli"
+            "--verbosity", $env:TOOL_SIGN_VERBOSITY
+          )
+          dotnet tool run sign -- @signArgs
+
+      - name: Create VSIX package
+        env:
+          PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER_ID }}
+        run: |
+          tfx extension create \
+            --manifest-globs vss-extension.json \
+            --root azure-devops-extension \
+            --output-path . \
+            --publisher "$PUBLISHER" \
+            --overrides-file overrides.json
+
+      - name: Generate Generic Attestations
+        uses: actions/attest@v4.1.0
+        with:
+          subject-path: |
+            ${{ steps.modulePackage.outputs.createdPackage }}
+            *.vsix
+
+      - name: Upload PowerShell package artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: d365gitops-psgallery-package
+          path: ${{ steps.modulePackage.outputs.createdPackage }}
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: d365gitops-marketplace-package
+          path: '*.vsix'
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        if: ${{ github.event_name == 'workflow_dispatch' && steps.version.outputs.version }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          files: |
+            ${{ steps.modulePackage.outputs.createdPackage }}
+            *.vsix
+          generate_release_notes: true
+
+  publish-psgallery:
+    runs-on: windows-latest
+    needs:
+      - package
+    environment: PowerShell Gallery
+    steps:
+      - name: Download PowerShell package artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: d365gitops-psgallery-package
+          path: artifacts
+
+      - name: Publish to PowerShell Gallery
+        shell: pwsh
+        env:
+          POWERSHELLGALLERYAPIKEY: ${{ secrets.POWERSHELLGALLERYAPIKEY }}
+        run: |
+          if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSResourceRepository -Default
+          }
+
+          $createdPackage = Get-ChildItem -Path artifacts -Filter *.nupkg | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $createdPackage) {
+            throw 'No .nupkg artifact found in artifacts directory.'
+          }
+
+          Publish-PSResource -NupkgPath $createdPackage -Repository PSGallery -ApiKey $env:POWERSHELLGALLERYAPIKEY -Verbose
+
+  publish-marketplace:
+    runs-on: ubuntu-latest
+    needs:
+      - package
+      - publish-psgallery
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.marketplace_environment || 'marketplace' }}
+    env:
+      ADO_RESOURCE_ID: 499b84ac-1321-427f-aa17-267ca6975798
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '>=22'
+
+      - name: Install tooling
+        run: npm install --global tfx-cli@0.23.1
+
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: d365gitops-marketplace-package
+          path: artifacts
+
+      - name: Azure login using OIDC
+        id: azure-login
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Get Azure DevOps access token from OIDC session
+        id: token
+        run: |
+          TOKEN=$(az account get-access-token --resource "$ADO_RESOURCE_ID" --query accessToken --output tsv)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Get user profile
+        run: |
+          az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me \
+            --resource "$ADO_RESOURCE_ID"
+
+      - name: Publish extension to Marketplace
+        env:
+          ADO_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          VSIX=$(ls -1 artifacts/*.vsix | head -n 1)
+          tfx extension publish \
+            --vsix "$VSIX" \
+            --service-url https://marketplace.visualstudio.com \
+            --auth-type pat \
+            --token "$ADO_TOKEN" \
+            --no-prompt
