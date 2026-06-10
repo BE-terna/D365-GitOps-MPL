@@ -7,6 +7,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 [![PowerShell Gallery - D365GitOps](https://img.shields.io/badge/PowerShell%20Gallery-D365GitOps-blue.svg)](https://www.powershellgallery.com/packages/D365GitOps)
 
+![License: MPL-2.0](https://img.shields.io/github/license/BE-terna/D365-GitOps-MPL)
+
+
 
 ## Azure DevOps Marketplace extension
 

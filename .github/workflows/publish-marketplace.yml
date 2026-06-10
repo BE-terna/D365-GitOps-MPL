@@ -81,8 +81,8 @@ jobs:
           PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER_ID }}
         run: |
           tfx extension create \
-            --manifest-globs azure-devops-extension/vss-extension.json \
-            --root . \
+            --manifest-globs vss-extension.json \
+            --root azure-devops-extension \
             --output-path . \
             --publisher "$PUBLISHER" \
             --overrides-file overrides.json
