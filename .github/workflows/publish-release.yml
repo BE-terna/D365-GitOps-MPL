@@ -80,7 +80,7 @@ jobs:
           TARGET_ENVIRONMENT: ${{ env.TARGET_MARKETPLACE_ENVIRONMENT }}
         run: |
           # Keep extension task script aligned with the module source script before packaging.
-          Copy-Item D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Merge-DailyBuildBranch.ps1 -Force
+          Copy-Item D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1 azure-devops-extension/tasks/Merge-DailyBuildBranch/Merge-DailyBuildBranch.ps1 -Force -Verbose
 
           $isPublic = $env:TARGET_ENVIRONMENT -eq 'marketplace'
           [PSCustomObject]@{
