@@ -13,16 +13,24 @@ runs:
       with:
         node-version: '>=22'
 
-    - name: Cache npm global packages
+    - name: Setup npm prefix
+      shell: bash
+      run: npm config set prefix ~/.npm-global
+
+    - name: Cache TFX CLI
       id: cache
       uses: actions/cache@v5
       with:
-        path: ~/.npm
-        key: npm-global-${{ runner.os }}-tfx-cli-0.23.1
+        path: ~/.npm-global
+        key: tfx-cli-${{ runner.os }}-0.23.1
         restore-keys: |
-          npm-global-${{ runner.os }}-
+          tfx-cli-${{ runner.os }}-
 
     - name: Install TFX CLI
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: npm install --global tfx-cli@0.23.1
+
+    - name: Add npm-global to PATH
+      shell: bash
+      run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
