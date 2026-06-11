@@ -207,7 +207,7 @@ if (Test-Path -Path $mergeLabelScriptPath) {
 	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File `"$mergeLabelScriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
 }
 else {
-	Write-Verbose "Merge label driver script not found at $mergeLabelScriptPath. Skipping merge.d365fo-label.driver configuration."
+	Write-Verbose -Verbose "Merge label driver script not found at $mergeLabelScriptPath. Skipping merge.d365fo-label.driver configuration."
 }
 $mergedPRs = @()
 $skippedPRs = @()

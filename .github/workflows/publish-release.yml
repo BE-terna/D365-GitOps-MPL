@@ -173,7 +173,8 @@ jobs:
             --root azure-devops-extension \
             --output-path . \
             --publisher "$PUBLISHER" \
-            --overrides-file overrides.json
+            --overrides-file overrides.json \
+            --no-prompt --json5
 
       - name: Generate generic attestations
         uses: actions/attest@v4.1.0
@@ -286,4 +287,4 @@ jobs:
             --service-url https://marketplace.visualstudio.com \
             --auth-type pat \
             --token "$ADO_TOKEN" \
-            --no-prompt
+            --no-prompt --json5
