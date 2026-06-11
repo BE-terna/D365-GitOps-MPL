@@ -38,6 +38,7 @@ permissions:
 jobs:
   package:
     runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.package_runner || 'windows-latest' }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.marketplace_environment || 'marketplace' }}
     outputs:
       version: ${{ steps.version.outputs.version }}
     env:
