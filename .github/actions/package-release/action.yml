@@ -81,7 +81,7 @@ runs:
         EXTENSION_ID: ${{ inputs.marketplace-extension-id }}
         TARGET_ENVIRONMENT: ${{ inputs.marketplace-environment }}
       run: |
-        Copy-Item D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1 azure-devops-extension/tasks/PrepareDailyBuildBranch/Merge-DailyBuildBranch.ps1 -Force
+        Copy-Item D365GitOps/functions/DailyBuild/Merge-DailyBuildBranch.ps1 azure-devops-extension/tasks/Merge-DailyBuildBranch/Merge-DailyBuildBranch.ps1 -Force -Verbose
 
         $isPublic = $env:TARGET_ENVIRONMENT -eq 'marketplace'
         [PSCustomObject]@{
