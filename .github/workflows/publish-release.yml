@@ -164,6 +164,7 @@ jobs:
           dotnet tool run sign -- @signArgs
 
       - name: Create VSIX package
+        shell: bash
         env:
           PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER_ID }}
         run: |
@@ -275,6 +276,7 @@ jobs:
             --resource "$ADO_RESOURCE_ID"
 
       - name: Publish extension to Marketplace
+        shell: bash
         env:
           ADO_TOKEN: ${{ steps.token.outputs.token }}
         run: |
