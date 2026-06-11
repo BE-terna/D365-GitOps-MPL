@@ -239,6 +239,12 @@ jobs:
     env:
       ADO_RESOURCE_ID: 499b84ac-1321-427f-aa17-267ca6975798
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions
+
       - name: Setup TFX CLI
         uses: ./.github/actions/setup-tfx
 
