@@ -15,27 +15,27 @@
     "operations"
   ],
   "public": false,
-  "baseUri": "https://github.com/BE-terna/D365-GitOps",
+  "baseUri": "https://github.com/BE-terna/D365-GitOps-MPL",
   "repository": {
     "type": "git",
-    "uri": "https://github.com/BE-terna/D365-GitOps.git"
+    "uri": "https://github.com/BE-terna/D365-GitOps-MPL.git"
   },
   "badges": [
     {
-      "uri": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-psgallery.yml/badge.svg",
+      "uri": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-release.yml/badge.svg",
       "href": "https://github.com/BE-terna/D365-GitOps-MPL/",
       "description": "GitHub"
     },
-    {
-      "uri": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-psgallery.yml/badge.svg?event=release",
-      "href": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-psgallery.yml",
-      "description": "GH-Release"
-    },
-    {
-      "uri": "https://img.shields.io/github/v/release/BE-terna/D365-GitOps-MPL",
-      "href": "https://github.com/BE-terna/D365-GitOps-MPL/releases",
-      "description": "Release"
-    },
+    // {
+    //   "uri": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-release.yml/badge.svg?event=release",
+    //   "href": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-release.yml",
+    //   "description": "GH-Release"
+    // },
+    // {
+    //   "uri": "https://img.shields.io/github/v/release/BE-terna/D365-GitOps-MPL",
+    //   "href": "https://github.com/BE-terna/D365-GitOps-MPL/releases",
+    //   "description": "Release"
+    // },
     {
       "uri": "https://img.shields.io/github/license/BE-terna/D365-GitOps-MPL",
       "href": "https://github.com/BE-terna/D365-GitOps-MPL/blob/main/LICENSE",
@@ -52,14 +52,15 @@
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
-    },
-    {
-      "id": "Microsoft.TeamFoundation.Server"
     }
   ],
   "files": [
     {
       "path": "tasks/Merge-DailyBuildBranch"
+    },
+    {
+      "path": "../D365GitOps/functions/MergeDrivers",
+      "packagePath": "tasks/MergeDrivers"
     },
     {
       "path": "../LICENSE",
