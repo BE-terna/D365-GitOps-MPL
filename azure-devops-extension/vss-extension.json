@@ -26,22 +26,17 @@
       "href": "https://github.com/BE-terna/D365-GitOps-MPL/",
       "description": "GitHub"
     },
-    // {
-    //   "uri": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-release.yml/badge.svg?event=release",
-    //   "href": "https://github.com/BE-terna/D365-GitOps-MPL/actions/workflows/publish-release.yml",
-    //   "description": "GH-Release"
-    // },
-    // {
-    //   "uri": "https://img.shields.io/github/v/release/BE-terna/D365-GitOps-MPL",
-    //   "href": "https://github.com/BE-terna/D365-GitOps-MPL/releases",
-    //   "description": "Release"
-    // },
     {
       "uri": "https://img.shields.io/github/license/BE-terna/D365-GitOps-MPL",
       "href": "https://github.com/BE-terna/D365-GitOps-MPL/blob/main/LICENSE",
       "description": "License: MPL-2.0"
     }
   ],
+  "content": {
+    "details":{
+      "path": "overview.md"
+    }
+  },
   "categories": [
     "Azure Pipelines"
   ],
@@ -55,6 +50,9 @@
     }
   ],
   "files": [
+    {
+      "path": "overview.md"
+    },
     {
       "path": "tasks/Merge-DailyBuildBranch"
     },
