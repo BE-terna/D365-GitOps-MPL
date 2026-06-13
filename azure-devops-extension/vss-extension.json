@@ -6,6 +6,14 @@
   "version": "0.1.0",
   "name": "D365 GitOps",
   "description": "Prepare and maintain a daily-build branch from active pull requests.",
+  "content": {
+    "details": {
+      "path": "README.md"
+    },
+    "license": {
+      "path": "LICENSE"
+    }
+  },
   "tags": [
     "gitops",
     "d365fo",
@@ -32,11 +40,6 @@
       "description": "License: MPL-2.0"
     }
   ],
-  "content": {
-    "details":{
-      "path": "overview.md"
-    }
-  },
   "categories": [
     "Azure Pipelines"
   ],
@@ -51,7 +54,8 @@
   ],
   "files": [
     {
-      "path": "overview.md"
+      "path": "tasks/Merge-DailyBuildBranch/overview.md",
+      "packagePath": "README.md"
     },
     {
       "path": "tasks/Merge-DailyBuildBranch"
@@ -59,10 +63,6 @@
     {
       "path": "../D365GitOps/functions/MergeDrivers",
       "packagePath": "tasks/MergeDrivers"
-    },
-    {
-      "path": "../LICENSE",
-      "packagePath": "LICENSE"
     }
   ],
   "contributions": [

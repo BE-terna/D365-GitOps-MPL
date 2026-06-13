@@ -2,7 +2,7 @@
 
 Use this Azure DevOps custom task to create or update a `daily-build` branch by merging active pull requests targeting `main`.
 
-This task uses same script as in Powershell module 
+This task uses same script as in PowerShell module 
 [![PowerShell Gallery - D365GitOps](https://img.shields.io/badge/PowerShell%20Gallery-D365%20GitOps-blue.svg)](https://www.powershellgallery.com/packages/D365GitOps)
 [![GitHub](https://img.shields.io/badge/GitHub-D365%20GitOps-blue?logo=GitHub)](https://github.com/BE-terna/D365-GitOps-MPL)
 
@@ -24,19 +24,19 @@ schedules:
     always: true
 
 pool:
-	vmImage: windows-latest
+  vmImage: windows-latest
 
 steps:
-	- checkout: self
-		persistCredentials: true
+  - checkout: self
+    persistCredentials: true
 
-	- task: MergeDailyBuildBranch@1
-		displayName: Merge active PRs into daily-build
-		inputs:
-			dailyBuildBranch: daily-build
-			mergeStrategy: merge
-			defaultPriority: '100'
-			skipUnchangedPush: true
+  - task: MergeDailyBuildBranch@1
+    displayName: Merge active PRs into daily-build
+    inputs:
+      dailyBuildBranch: daily-build
+      mergeStrategy: merge
+      defaultPriority: '100'
+      skipUnchangedPush: true
 ```
 
 ## Inputs
