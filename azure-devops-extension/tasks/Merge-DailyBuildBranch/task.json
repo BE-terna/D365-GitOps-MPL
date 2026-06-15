@@ -10,7 +10,7 @@
   "version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 2
+    "Patch": 6
   },
   "demands": [],
   "minimumAgentVersion": "2.206.1",
@@ -56,7 +56,7 @@
   "execution": {
     "PowerShell3": {
       "target": "Merge-DailyBuildBranch.ps1",
-      "argumentFormat": "-dailyBuildBranch \"$(dailyBuildBranch)\" -mergeStrategy \"$(mergeStrategy)\" -defaultPriority \"$(defaultPriority)\" -skipUnchangedPush:$(skipUnchangedPush)"
+      "argumentFormat": "-dailyBuildBranch \"$(dailyBuildBranch)\" -mergeStrategy \"$(mergeStrategy)\" -defaultPriority \"$(defaultPriority)\" -skipUnchangedPush:$(skipUnchangedPush) -Pat '$(System.AccessToken)'"
     }
   },
   "restrictions": {

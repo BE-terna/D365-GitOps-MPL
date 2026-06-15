@@ -15,13 +15,13 @@ runs:
 
     - name: Setup npm prefix
       shell: bash
-      run: npm config set prefix ~/.npm-global
+      run: npm config set prefix .npm-global
 
     - name: Cache TFX CLI
       id: cache
       uses: actions/cache@v5
       with:
-        path: ~/.npm-global
+        path: .npm-global
         key: tfx-cli-${{ runner.os }}-0.23.1
         restore-keys: |
           tfx-cli-${{ runner.os }}-
@@ -33,4 +33,4 @@ runs:
 
     - name: Add npm-global to PATH
       shell: bash
-      run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
+      run: echo ".npm-global/bin" >> $GITHUB_PATH
