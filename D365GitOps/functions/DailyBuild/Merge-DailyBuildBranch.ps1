@@ -60,7 +60,6 @@ function Invoke-Git {
 	)
 
 	Write-Verbose "Running git $($Args -join ' ')"
-
 	& git @gitArgs @Args
 	if ($LASTEXITCODE -ne 0) {
 		throw "git $($Args -join ' ') failed with exit code $LASTEXITCODE."
@@ -73,9 +72,10 @@ function Get-CommitIdentity {
 		[string]$Ref
 	)
 
+	Write-Verbose "Resolving commit identity for $Ref..."
 	$identity = & git @gitArgs 'show' '--no-patch' "--format=%an`n%ae" $Ref
 	if ($LASTEXITCODE -ne 0) {
-		throw "Failed to resolve commit identity for $Ref."
+		throw "Failed to resolve commit identity for $Ref. Please verify fetch depth."
 	}
 
 	$identityLines = @($identity | Where-Object { $_ -ne $null })
@@ -97,6 +97,7 @@ function Invoke-GitWithCommitIdentity {
 		[string[]]$Args
 	)
 
+	Write-Verbose "Running git $($Args -join ' ') with identity $($Identity.Name) <$($Identity.Email)>"
 	& git @gitArgs '-c' "user.name=$($Identity.Name)" '-c' "user.email=$($Identity.Email)" @Args
 	if ($LASTEXITCODE -ne 0) {
 		throw "git $($Args -join ' ') failed with exit code $LASTEXITCODE."
@@ -154,6 +155,7 @@ function Set-PullRequestStatus {
 		}
 		targetUrl   = $targetUrl
 	} | ConvertTo-Json
+	Write-Verbose "Posting status to PR !$PullRequestId (iteration: $IterationId): $State - $Description"
 	$uri = "$OrganizationUri/$([Uri]::EscapeDataString($Project))/_apis/git/repositories/$repositoryId/pullRequests/$PullRequestId/statuses?api-version=7.1"
 	try {
 		Invoke-RestMethod -Uri $uri -Method Post -Body $body -ContentType 'application/json' -Headers @{ Authorization = $authHeader } | Out-Null
@@ -171,6 +173,8 @@ function Get-LatestPullRequestIteration {
 
 	$authHeader = "Basic $([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("PAT:$Pat")))"
 	$uri = "$OrganizationUri/$([Uri]::EscapeDataString($Project))/_apis/git/repositories/$repositoryId/pullRequests/$PullRequestId/iterations?includeCommits=false&api-version=7.1"
+	
+	Write-Verbose "Fetching iterations for PR !$PullRequestId..."
 	$response = Invoke-RestMethod -Uri $uri -Method Get -Headers @{ Authorization = $authHeader }
 
 	if (-not $response -or -not $response.value -or $response.value.Count -eq 0) {
@@ -178,6 +182,7 @@ function Get-LatestPullRequestIteration {
 	}
 
 	# The API returns iterations in ascending order; the last one is the current iteration.
+	Write-Verbose "Found $($response.value.Count) iterations for PR !$PullRequestId. Returning the latest iteration (ID: $($response.value[-1].id))."
 	return $response.value[-1]
 }
 
@@ -194,9 +199,14 @@ function Resolve-IterationIdForStatus {
 	return 1
 }
 
+$env:AZURE_DEVOPS_EXT_PAT = $Pat
+$azExtensions = az extension list --query '[].name' --output json | ConvertFrom-Json
+if ($azExtensions -notcontains 'azure-devops') {
+	az extension add --name azure-devops
+}
 az devops configure --defaults organization=$OrganizationUri project=$Project
 
-# future idea - dependency-aware ordering (depends-on PR list)
+Write-Verbose "Fetching active PRs targeting 'main'..."
 $prResponse = az repos pr list --repository "$RepositoryName" --target-branch main --status active --query '[?!isDraft]' --output json
 $pr = ($prResponse | ConvertFrom-Json)
 Write-Verbose "Fetched $($pr.Count) active PRs targeting 'main'."
@@ -215,7 +225,7 @@ $repositoryId = (az repos show --repository "$RepositoryName" --query id --outpu
 
 Invoke-Git @('fetch', 'origin', 'main')
 Invoke-Git @('checkout', '-B', $DailyBuildBranch, 'origin/main')
-$mergeLabelScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'MergeDrivers/Merge-D365LabelFile.ps1'
+$mergeLabelScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'ps_modules/D365GitOps/functions/MergeDrivers/Merge-D365LabelFile.ps1'
 if (Test-Path -Path $mergeLabelScriptPath) {
 	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File `"$mergeLabelScriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
 }

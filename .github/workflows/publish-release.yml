@@ -273,12 +273,15 @@ jobs:
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Get user profile
+        if: runner.debug == '1'
         run: |
           az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me \
             --resource "$ADO_RESOURCE_ID"
 
       - name: Publish extension to Marketplace
         shell: bash
+        timeout-minutes: 5
+        continue-on-error: true
         env:
           ADO_TOKEN: ${{ steps.token.outputs.token }}
         run: |

@@ -4,16 +4,16 @@
   "name": "MergeDailyBuildBranch",
   "friendlyName": "Merge Daily Build Branch",
   "description": "Builds and updates a daily-build branch by merging active pull requests to main.",
-  "helpMarkDown": "Uses Merge-DailyBuildBranch.ps1 to create and push a consolidated daily-build branch.",
+  "helpMarkDown": "Uses Merge-DailyBuildBranch.ps1 to create and push a consolidated daily-build branch. [help](https://github.com/BE-terna/D365-GitOps-MPL/blob/main/azure-devops-extension/tasks/Merge-DailyBuildBranch/overview.md)",
   "category": "Azure Pipelines",
   "author": "BE-terna",
   "version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 6
+    "Patch": 7
   },
   "demands": [],
-  "minimumAgentVersion": "2.206.1",
+  "minimumAgentVersion": "4.0.0",
   "instanceNameFormat": "Merge daily build branch",
   "inputs": [
     {
@@ -56,7 +56,7 @@
   "execution": {
     "PowerShell3": {
       "target": "Merge-DailyBuildBranch.ps1",
-      "argumentFormat": "-dailyBuildBranch \"$(dailyBuildBranch)\" -mergeStrategy \"$(mergeStrategy)\" -defaultPriority \"$(defaultPriority)\" -skipUnchangedPush:$(skipUnchangedPush) -Pat '$(System.AccessToken)'"
+      "argumentFormat": "-dailyBuildBranch \"$(dailyBuildBranch)\" -mergeStrategy \"$(mergeStrategy)\" -defaultPriority \"$(defaultPriority)\" -skipUnchangedPush:$(skipUnchangedPush)"
     }
   },
   "restrictions": {

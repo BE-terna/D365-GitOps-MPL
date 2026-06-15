@@ -72,4 +72,3 @@ steps:
         }
     env:
       DEVOPS_PAT: $(System.AccessToken)
-      AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)

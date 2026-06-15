@@ -32,6 +32,8 @@ steps:
 
   - task: MergeDailyBuildBranch@1
     displayName: Merge active PRs into daily-build
+    env:
+      DEVOPS_PAT: $(System.AccessToken)
     inputs:
       dailyBuildBranch: daily-build
       mergeStrategy: merge
