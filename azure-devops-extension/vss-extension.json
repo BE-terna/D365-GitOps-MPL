@@ -58,6 +58,10 @@
       "packagePath": "README.md"
     },
     {
+      "path": "../D365GitOps",
+      "packagePath": "tasks/Merge-DailyBuildBranch/ps_modules/D365GitOps"
+    },
+    {
       "path": "tasks/Merge-DailyBuildBranch"
     },
     {
