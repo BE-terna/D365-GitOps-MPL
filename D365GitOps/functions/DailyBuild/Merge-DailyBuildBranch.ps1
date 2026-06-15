@@ -17,9 +17,19 @@ param(
 	[switch]$SkipUnchangedPush
 )
 
+# if ($MyInvocation.InvocationName -eq '.') {
+#     return
+# }
 
-if ($MyInvocation.InvocationName -eq '.') {
-    return
+if ($env:SYSTEM_DEBUG -eq 'true') {
+	$VerbosePreference = 'Continue'
+	Write-Verbose "OrganizationUri: $OrganizationUri"
+	Write-Verbose "Project: $Project"
+	Write-Verbose "RepositoryName: $RepositoryName"
+	Write-Verbose "DailyBuildBranch: $DailyBuildBranch"
+	Write-Verbose "MergeStrategy: $MergeStrategy"
+	Write-Verbose "DefaultPriority: $DefaultPriority"
+	Write-Verbose "SkipUnchangedPush: $SkipUnchangedPush"
 }
 
 $gitArgs = @(
@@ -48,6 +58,8 @@ function Invoke-Git {
 		[Parameter(Mandatory = $true)]
 		[string[]]$Args
 	)
+
+	Write-Verbose "Running git $($Args -join ' ')"
 
 	& git @gitArgs @Args
 	if ($LASTEXITCODE -ne 0) {
@@ -187,6 +199,7 @@ az devops configure --defaults organization=$OrganizationUri project=$Project
 # future idea - dependency-aware ordering (depends-on PR list)
 $prResponse = az repos pr list --repository "$RepositoryName" --target-branch main --status active --query '[?!isDraft]' --output json
 $pr = ($prResponse | ConvertFrom-Json)
+Write-Verbose "Fetched $($pr.Count) active PRs targeting 'main'."
 $pr = $pr | Where-Object {
 	if (!$_.labels) { $_.labels = @() }
 	$labelNames = @($_.labels | ForEach-Object { $_.name })
