@@ -3,18 +3,30 @@
   "id": "1788f294-5c13-4d88-95f5-271667f90fdb",
   "name": "MergeDailyBuildBranch",
   "friendlyName": "Merge Daily Build Branch",
-  "description": "Builds and updates a daily-build branch by merging active pull requests to main.",
+  "description": "Build task to merge all active pull requests into a consolidated daily-build branch.",
   "helpMarkDown": "Uses Merge-DailyBuildBranch.ps1 to create and push a consolidated daily-build branch. [help](https://github.com/BE-terna/D365-GitOps-MPL/blob/main/azure-devops-extension/tasks/Merge-DailyBuildBranch/overview.md)",
   "category": "Azure Pipelines",
   "author": "BE-terna",
   "version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 10
+    "Patch": 11
   },
   "demands": [],
+  "visibility": [
+    "Build",
+    "Release"
+  ],
   "minimumAgentVersion": "4.0.0",
   "instanceNameFormat": "Merge daily build branch",
+  "showEnvironmentVariables": true,
+  "groups": [
+    {
+      "name": "advanced",
+      "displayName": "Advanced",
+      "isExpanded": false
+    }
+  ],
   "inputs": [
     {
       "name": "dailyBuildBranch",
@@ -23,6 +35,15 @@
       "defaultValue": "daily-build",
       "required": true,
       "helpMarkDown": "Target branch name that receives merged pull requests."
+    },
+    {
+      "name": "targetBranch",
+      "type": "string",
+      "label": "Target branch",
+      "defaultValue": "main",
+      "required": false,
+      "groupName": "advanced",
+      "helpMarkDown": "Search for active pull requests targeting this branch. Defaults to 'main' if not specified."
     },
     {
       "name": "mergeStrategy",
@@ -42,6 +63,7 @@
       "label": "Default priority",
       "defaultValue": "100",
       "required": true,
+      "groupName": "advanced",
       "helpMarkDown": "Fallback priority when no priority:x label exists."
     },
     {
@@ -56,7 +78,7 @@
   "execution": {
     "PowerShell3": {
       "target": "Merge-DailyBuildBranch.ps1",
-      "argumentFormat": "-Verbose -DailyBuildBranch \"$(dailyBuildBranch)\" -MergeStrategy \"$(mergeStrategy)\" -DefaultPriority \"$(defaultPriority)\" -SkipUnchangedPush:$(skipUnchangedPush)"
+      "argumentFormat": "-Verbose -DailyBuildBranch \"$(dailyBuildBranch)\" -TargetBranch \"$(targetBranch)\" -MergeStrategy \"$(mergeStrategy)\" -DefaultPriority \"$(defaultPriority)\" -SkipUnchangedPush:$(skipUnchangedPush)"
     }
   },
   "restrictions": {

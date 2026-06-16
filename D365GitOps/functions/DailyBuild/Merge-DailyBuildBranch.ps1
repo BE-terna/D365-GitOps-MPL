@@ -11,6 +11,7 @@ param(
 	[string]$RepositoryName = $env:BUILD_REPOSITORY_NAME,
 	[string]$RepositoryDirectory = $env:BUILD_SOURCESDIRECTORY,
 	[string]$DailyBuildBranch = 'daily-build',
+	[string]$TargetBranch = 'main',
 	[ValidateSet('merge', 'squash')]
 	[string]$MergeStrategy = 'merge',
 	[int]$DefaultPriority = 100,
@@ -18,12 +19,22 @@ param(
 	[switch]$SkipUnchangedPush
 )
 
-# if ($MyInvocation.InvocationName -eq '.') {
-#     return
-# }
+if ($MyInvocation.InvocationName -eq '.') {
+	return
+}
+
+if ([string]::IsNullOrWhiteSpace($TargetBranch)) {
+	$TargetBranch = 'main'
+}
+
+if ($DefaultPriority -lt 0) {
+	$DefaultPriority = 100
+}
 
 if ($env:SYSTEM_DEBUG -eq 'true') {
+	$VerbosePreference
 	$VerbosePreference = 'Continue'
+	$VerbosePreference
 	Write-Verbose "PWD: $PWD"
 	Write-Verbose "OrganizationUri: $OrganizationUri"
 	Write-Verbose "Project: $Project"
@@ -32,8 +43,6 @@ if ($env:SYSTEM_DEBUG -eq 'true') {
 	Write-Verbose "MergeStrategy: $MergeStrategy"
 	Write-Verbose "DefaultPriority: $DefaultPriority"
 	Write-Verbose "SkipUnchangedPush: $SkipUnchangedPush"
-
-	Get-ChildItem
 }
 
 Push-Location -Path $RepositoryDirectory
@@ -212,10 +221,10 @@ if ($azExtensions -notcontains 'azure-devops') {
 }
 az devops configure --defaults organization=$OrganizationUri project=$Project
 
-Write-Verbose "Fetching active PRs targeting 'main'..."
-$prResponse = az repos pr list --repository "$RepositoryName" --target-branch main --status active --query '[?!isDraft]' --output json
+Write-Verbose "Fetching active PRs targeting '$TargetBranch'..."
+$prResponse = az repos pr list --repository "$RepositoryName" --target-branch $TargetBranch --status active --query '[?!isDraft]' --output json
 $pr = ($prResponse | ConvertFrom-Json)
-Write-Verbose "Fetched $($pr.Count) active PRs targeting 'main'."
+Write-Verbose "Fetched $($pr.Count) active PRs targeting '$TargetBranch'."
 $pr = $pr | Where-Object {
 	if (!$_.labels) { $_.labels = @() }
 	$labelNames = @($_.labels | ForEach-Object { $_.name })
@@ -229,8 +238,8 @@ $pr = $pr | Sort-Object -Property @(
 
 $repositoryId = (az repos show --repository "$RepositoryName" --query id --output tsv).Trim()
 
-Invoke-Git @('fetch', 'origin', 'main')
-Invoke-Git @('checkout', '-B', $DailyBuildBranch, 'origin/main')
+Invoke-Git @('fetch', 'origin', $TargetBranch)
+Invoke-Git @('checkout', '-B', $DailyBuildBranch, "origin/$TargetBranch")
 $mergeLabelScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'ps_modules/D365GitOps/functions/MergeDrivers/Merge-D365LabelFile.ps1'
 if (Test-Path -Path $mergeLabelScriptPath) {
 	Invoke-Git @('config', 'merge.d365fo-label.driver', "pwsh -File `"$mergeLabelScriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
