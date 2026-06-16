@@ -23,6 +23,7 @@ param(
 
 if ($env:SYSTEM_DEBUG -eq 'true') {
 	$VerbosePreference = 'Continue'
+	Write-Verbose "PWD: $PWD"
 	Write-Verbose "OrganizationUri: $OrganizationUri"
 	Write-Verbose "Project: $Project"
 	Write-Verbose "RepositoryName: $RepositoryName"
@@ -30,6 +31,8 @@ if ($env:SYSTEM_DEBUG -eq 'true') {
 	Write-Verbose "MergeStrategy: $MergeStrategy"
 	Write-Verbose "DefaultPriority: $DefaultPriority"
 	Write-Verbose "SkipUnchangedPush: $SkipUnchangedPush"
+
+	Get-ChildItem
 }
 
 $gitArgs = @(
