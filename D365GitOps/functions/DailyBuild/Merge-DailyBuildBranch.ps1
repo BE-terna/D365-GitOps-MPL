@@ -9,6 +9,7 @@ param(
 	[string]$OrganizationUri = $env:SYSTEM_COLLECTIONURI,
 	[string]$Project = $env:SYSTEM_TEAMPROJECTID,
 	[string]$RepositoryName = $env:BUILD_REPOSITORY_NAME,
+	[string]$RepositoryDirectory = $env:BUILD_SOURCESDIRECTORY,
 	[string]$DailyBuildBranch = 'daily-build',
 	[ValidateSet('merge', 'squash')]
 	[string]$MergeStrategy = 'merge',
@@ -34,6 +35,8 @@ if ($env:SYSTEM_DEBUG -eq 'true') {
 
 	Get-ChildItem
 }
+
+Push-Location -Path $RepositoryDirectory
 
 $gitArgs = @(
 	'-c',
