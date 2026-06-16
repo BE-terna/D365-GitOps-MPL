@@ -56,7 +56,7 @@
   "execution": {
     "PowerShell3": {
       "target": "Merge-DailyBuildBranch.ps1",
-      "argumentFormat": "-dailyBuildBranch \"$(dailyBuildBranch)\" -mergeStrategy \"$(mergeStrategy)\" -defaultPriority \"$(defaultPriority)\" -skipUnchangedPush:$(skipUnchangedPush)"
+      "argumentFormat": "-Verbose -DailyBuildBranch \"$(dailyBuildBranch)\" -MergeStrategy \"$(mergeStrategy)\" -DefaultPriority \"$(defaultPriority)\" -SkipUnchangedPush:$(skipUnchangedPush)"
     }
   },
   "restrictions": {
