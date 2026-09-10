@@ -15,7 +15,7 @@ param(
 	[ValidateSet('merge', 'squash')]
 	[string]$MergeStrategy = 'merge',
 	[int]$DefaultPriority = 100,
-	[string]$Pat = $env:DEVOPS_PAT,
+	[string]$Pat = $env:AZURE_DEVOPS_EXT_PAT,
 	[switch]$SkipUnchangedPush
 )
 
