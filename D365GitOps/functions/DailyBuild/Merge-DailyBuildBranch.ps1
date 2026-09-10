@@ -253,6 +253,7 @@ $skippedPRs = @()
 foreach ($item in $pr) {
 	if (-not $item.sourceRefName) {
 		Write-Warning "Skipping PR $($item.pullRequestId): missing sourceRefName."
+		$skippedPRs += $item
 		continue
 	}
 
