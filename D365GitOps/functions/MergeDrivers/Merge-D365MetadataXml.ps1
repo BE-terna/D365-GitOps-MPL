@@ -70,6 +70,13 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
     not matter. Defaults to the bundled Default-UnorderedElements.rules file.
     Can also be set via the D365FO_XMLMERGE_RULES environment variable.
 
+.PARAMETER ConflictStyle
+    Conflict-marker style ('diff3' or 'zdiff3') used for the underlying
+    `git merge-file` call that handles everything outside the auto-resolved
+    containers. Both include the base/ancestor content in any leftover
+    conflict markers; zdiff3 additionally trims lines common to ours/theirs
+    for a tighter diff (requires git >= 2.35). Default: diff3.
+
 .EXAMPLE
     # Try the driver against the bundled samples (two concurrent, unrelated
     # additions under the same <EntryPoints> container merge cleanly):
@@ -92,7 +99,16 @@ param(
 
     [string]$FilePath = '', # %P  repo-relative path (informational only)
 
-    [string]$RulesPath = (Join-Path $PSScriptRoot 'Default-UnorderedElements.rules')
+    [string]$RulesPath = (Join-Path $PSScriptRoot 'Default-UnorderedElements.rules'),
+
+    # Conflict-hunk style used for the underlying `git merge-file` call (and thus
+    # for any leftover, non-auto-resolvable conflicts). diff3/zdiff3 both include
+    # the base/ancestor content in conflict markers and tend to align hunks to
+    # whole-element boundaries better than the plain style; zdiff3 additionally
+    # trims lines common to ours/theirs from inside the conflict for a tighter
+    # diff. Requires git >= 2.35 for zdiff3.
+    [ValidateSet('diff3', 'zdiff3')]
+    [string]$ConflictStyle = 'diff3'
 )
 
 if ($MyInvocation.InvocationName -eq '.') {
@@ -300,10 +316,11 @@ function Get-FragmentMap {
 function New-XmlConflictFragment {
     param(
         [string]$OursText,
+        [string]$BaseText,
         [string]$TheirsText,
-        [string]$Lt, [string]$Sep, [string]$Gt
+        [string]$Lt, [string]$Pipe, [string]$Sep, [string]$Gt
     )
-    return "$Lt ours`n$OursText`n$Sep`n$TheirsText`n$Gt theirs"
+    return "$Lt ours`n$OursText`n$Pipe base`n$BaseText`n$Sep`n$TheirsText`n$Gt theirs"
 }
 
 # Set-merges a container's children by identity key. Returns
@@ -326,9 +343,10 @@ function Merge-FragmentSet {
     foreach ($r in $TheirsFrags) { if ($seen.Add($r.Key)) { [void]$orderedKeys.Add($r.Key) } }
     foreach ($r in $BaseFrags)   { if ($seen.Add($r.Key)) { [void]$orderedKeys.Add($r.Key) } }
 
-    $lt  = '<' * $MarkerSize
-    $sep = '=' * $MarkerSize
-    $gt  = '>' * $MarkerSize
+    $lt   = '<' * $MarkerSize
+    $pipe = '|' * $MarkerSize
+    $sep  = '=' * $MarkerSize
+    $gt   = '>' * $MarkerSize
 
     $items       = [System.Collections.Generic.List[pscustomobject]]::new()
     $hasConflict = $false
@@ -346,7 +364,7 @@ function Merge-FragmentSet {
             }
             else {
                 $hasConflict = $true
-                $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment $oMap[$key].Text $tMap[$key].Text $lt $sep $gt) })
+                $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment $oMap[$key].Text '' $tMap[$key].Text $lt $pipe $sep $gt) })
             }
             continue
         }
@@ -356,14 +374,14 @@ function Merge-FragmentSet {
         if (-not $inO) {
             if ($tMap[$key].Text -eq $bMap[$key].Text) { continue }  # ours deleted, theirs unchanged
             $hasConflict = $true
-            $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment '' $tMap[$key].Text $lt $sep $gt) })
+            $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment '' $bMap[$key].Text $tMap[$key].Text $lt $pipe $sep $gt) })
             continue
         }
 
         if (-not $inT) {
             if ($oMap[$key].Text -eq $bMap[$key].Text) { continue }  # theirs deleted, ours unchanged
             $hasConflict = $true
-            $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment $oMap[$key].Text '' $lt $sep $gt) })
+            $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment $oMap[$key].Text $bMap[$key].Text '' $lt $pipe $sep $gt) })
             continue
         }
 
@@ -376,7 +394,7 @@ function Merge-FragmentSet {
         elseif ($oMap[$key].Text -eq $tMap[$key].Text) { $items.Add([pscustomobject]@{ Text = $oMap[$key].Text }) }
         else {
             $hasConflict = $true
-            $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment $oMap[$key].Text $tMap[$key].Text $lt $sep $gt) })
+            $items.Add([pscustomobject]@{ Text = (New-XmlConflictFragment $oMap[$key].Text $bMap[$key].Text $tMap[$key].Text $lt $pipe $sep $gt) })
         }
     }
 
@@ -530,7 +548,7 @@ try {
     [System.IO.File]::WriteAllText($oursTemp, $oursWorking, $utf8NoBom)
     [System.IO.File]::WriteAllText($theirsTemp, $theirsWorking, $utf8NoBom)
 
-    $gitStdErr = $($mergedText = & git merge-file -L ours -L base -L theirs "--marker-size=$MarkerSize" -p $oursTemp $baseTemp $theirsTemp) 2>&1 |
+    $gitStdErr = $($mergedText = & git merge-file "--$ConflictStyle" -L ours -L base -L theirs "--marker-size=$MarkerSize" -p $oursTemp $baseTemp $theirsTemp) 2>&1 |
         Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
     $gitExitCode = $LASTEXITCODE
     $mergedText = ($mergedText -join "`n")
