@@ -1,0 +1,22 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Default rules for Merge-D365MetadataXml.ps1
+#
+# One absolute XPath per line, pointing at the *repeated* element whose
+# sibling order does not matter (identity is taken from that element's own
+# <Name> child). Blank lines and lines starting with '#' are ignored.
+#
+# Note: order of sibling elements that share the same <Parent> value (e.g.
+# AxMenuExtension/Elements/AxMenuExtensionElement) is always treated as
+# order-independent automatically and does not need to be listed here.
+
+# AxTable: field order does not matter
+/AxTable/Fields/AxTableField
+
+# AxTable: index order does not matter
+/AxTable/Indexes/AxTableIndex
+
+# AxSecurityPrivilege: entry point order does not matter
+/AxSecurityPrivilege/EntryPoints/AxSecurityEntryPointReference
