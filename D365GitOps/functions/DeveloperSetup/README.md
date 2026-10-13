@@ -12,6 +12,7 @@ Scripts for configuring a developer workstation to use D365GitOps tooling.
 | File | Description |
 |------|-------------|
 | `Register-D365LabelFileMergeDriver.ps1` | Defines the `Register-D365LabelFileMergeDriver` function that registers the `d365fo-label` git merge driver |
+| `Register-D365XmlFileMergeDriver.ps1` | Defines the `Register-D365XmlFileMergeDriver` function that registers the `d365fo-xml` git merge driver |
 
 ## Usage
 
@@ -57,3 +58,20 @@ Gallery or used directly from source.
   ```
 
 - Run once per clone (local) or once per machine (global).
+
+## XML merge driver (`d365fo-xml`)
+
+```powershell
+Import-Module D365GitOps
+
+# Register for the current repository only
+Register-D365XmlFileMergeDriver
+
+# Register globally, optionally with a shared rules file
+Register-D365XmlFileMergeDriver -Global -RulesPath C:/GitOps/.xmlmergerules
+```
+
+Writes `merge.d365fo-xml.name` and `merge.d365fo-xml.driver`
+(`pwsh -NoProfile -File "<path>/Merge-D365XmlFile.ps1" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P`).
+The consumer repository assigns files to it in `.gitattributes`, e.g. `*.xml merge=d365fo-xml`.
+See [MergeDrivers](../MergeDrivers/README.md) for the rules file.

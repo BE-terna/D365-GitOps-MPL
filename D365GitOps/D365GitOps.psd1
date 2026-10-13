@@ -18,14 +18,16 @@ CompanyName = 'BE-terna'
 
 Copyright = 'This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.'
 
-Description = 'GitOps utilities for Dynamics 365 Finance and Operations: AxLabel merge driver and daily-build branch automation.'
+Description = 'GitOps utilities for Dynamics 365 Finance and Operations: AxLabel and XML (order-independent elements) merge drivers and daily-build branch automation.'
 
 PowerShellVersion = '7.0'
 
 FunctionsToExport = @(
     'Merge-DailyBuildBranch'
     'Merge-D365LabelFile'
+    'Merge-D365XmlFile'
     'Register-D365LabelFileMergeDriver'
+    'Register-D365XmlFileMergeDriver'
 )
 
 CmdletsToExport = @()
@@ -37,7 +39,10 @@ AliasesToExport = @()
 FileList = @(
     'D365GitOps.psm1',
     'functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1',
+    'functions/DeveloperSetup/Register-D365XmlFileMergeDriver.ps1',
     'functions/MergeDrivers/Merge-D365LabelFile.ps1',
+    'functions/MergeDrivers/Merge-D365XmlFile.ps1',
+    'functions/MergeDrivers/D365FO.xmlmergerules',
     'functions/DailyBuild/Merge-DailyBuildBranch.ps1'
 )
 
@@ -45,7 +50,7 @@ PrivateData = @{
 
     PSData = @{
 
-        Tags = 'D365', 'D365FO', 'GitOps', 'git', 'merge-driver', 'AxLabel', 'AzureDevOps'
+        Tags = 'D365', 'D365FO', 'GitOps', 'git', 'merge-driver', 'AxLabel', 'xml', 'AzureDevOps'
 
         LicenseUri = 'https://mozilla.org/MPL/2.0/'
 
