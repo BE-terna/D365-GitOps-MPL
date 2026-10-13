@@ -28,6 +28,10 @@ idea of the rules is to be new line separated XPaths of the elements where order
 this merge driver will be used by developers and by a CI/CD automation where we merge all open pull requests (it must be os/agent agnostic)
 
 for test use
-/workspaces/D365-GitOps-MPL/D365GitOps/functions/MergeDrivers/Sample-Base-*.xml
+/workspaces/D365-GitOps-MPL/D365GitOps/functions/MergeDrivers/
+- initial base: Sample-Base.xml
+- user 1: Sample-Base-C001.xml
+- user 2: Sample-Base-C002.xml
+- expected result: Sample-Base-Expected-a.xml or Sample-Base-Expected-a.xml (acceptance criteria - order is not important/one or another)
 
 if you have any additional questions or thera are some things unclear: ask
