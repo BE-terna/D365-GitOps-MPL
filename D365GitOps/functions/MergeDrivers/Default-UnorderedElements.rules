@@ -1,0 +1,5 @@
+# One absolute XPath per unordered collection item. Siblings must have unique
+# direct-child <Name> values; item subtrees are merged as indivisible units.
+/AxTable/Fields/AxTableField
+/AxTable/Indexes/AxTableIndex
+/AxSecurityPrivilege/EntryPoints/AxSecurityEntryPointReference

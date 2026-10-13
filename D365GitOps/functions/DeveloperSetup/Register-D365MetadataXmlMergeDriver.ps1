@@ -40,7 +40,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
     Import-Module D365GitOps
     Register-D365MetadataXmlMergeDriver
 #>
-[CmdletBinding(DefaultParameterSetName = "CustomCommand")]
+[CmdletBinding(DefaultParameterSetName = "CustomScriptPath")]
 param(
     [switch]$Global
     ,
@@ -57,7 +57,10 @@ Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $InformationPreference = 'Continue'
 
-$mergeXmlCommand = Get-Command $MergeXmlCommandName -ErrorAction Ignore
+$mergeXmlCommand = $null
+if ($PSCmdlet.ParameterSetName -eq 'CustomCommand') {
+    $mergeXmlCommand = Get-Command $MergeXmlCommandName -ErrorAction Ignore
+}
 if ($mergeXmlCommand) {
     $mergeXmlScript = "-Command $($mergeXmlCommand.Name)"
 }
