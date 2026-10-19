@@ -247,6 +247,18 @@ if (Test-Path -Path $mergeLabelScriptPath) {
 else {
 	Write-Verbose -Verbose "Merge label driver script not found at $mergeLabelScriptPath. Skipping merge.d365fo-label.driver configuration."
 }
+# Module layout (functions/DailyBuild -> functions/MergeDrivers) or extension task layout (ps_modules/D365GitOps).
+$mergeXmlScriptPath = @(
+	(Join-Path $PSScriptRoot '../MergeDrivers/Merge-D365XmlFile.ps1'),
+	(Join-Path $PSScriptRoot 'ps_modules/D365GitOps/functions/MergeDrivers/Merge-D365XmlFile.ps1')
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+if ($mergeXmlScriptPath) {
+	$mergeXmlScriptPath = (Resolve-Path -LiteralPath $mergeXmlScriptPath).ProviderPath.Replace('\', '/')
+	Invoke-Git @('config', 'merge.d365fo-xml.driver', "pwsh -NoProfile -File `"$mergeXmlScriptPath`" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P")
+}
+else {
+	Write-Verbose -Verbose "Merge XML driver script Merge-D365XmlFile.ps1 not found. Skipping merge.d365fo-xml.driver configuration."
+}
 $mergedPRs = @()
 $skippedPRs = @()
 

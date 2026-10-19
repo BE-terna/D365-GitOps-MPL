@@ -62,6 +62,14 @@ The extension embeds this script directly, so no separate module installation is
 - If a PR's source branch has new commits since its last iteration, it is skipped to
   avoid merging an untested state.
 
+## Merge drivers
+
+Before merging, the script registers the `d365fo-xml` merge driver
+([Merge-D365XmlFile](../MergeDrivers/README.md)), so conflicts in order-independent XML
+elements (e.g. fields or entry points added by different PRs) are resolved automatically.
+The repository decides which files use it via `.gitattributes` (e.g. `*.xml merge=d365fo-xml`)
+and can customize the rules with a committed `.xmlmergerules` file.
+
 ## Status reporting
 
 After the run, each PR receives an Azure DevOps status:

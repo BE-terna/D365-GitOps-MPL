@@ -7,6 +7,8 @@ SHORT DESCRIPTION
 LONG DESCRIPTION
     D365GitOps provides utilities for Dynamics 365 FO GitOps automation,
     including AxLabel merge-driver registration, label merge/sort operations,
+    an XML merge driver for order-independent metadata elements
+    (Merge-D365XmlFile, Register-D365XmlFileMergeDriver),
     and daily-build branch preparation for Azure DevOps pull requests.
 
 KEYWORDS

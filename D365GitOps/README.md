@@ -12,7 +12,9 @@ GitOps utilities for Dynamics 365 Finance and Operations.
 | Script | Description |
 |--------|-------------|
 | `functions/MergeDrivers/Merge-D365LabelFile.ps1` | Git merge driver and standalone sorter for AxLabel translation files |
+| `functions/MergeDrivers/Merge-D365XmlFile.ps1` | Git merge driver for XML files with order-independent elements (D365FO metadata and others) |
 | `functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1` | Registers the `d365fo-label` git merge driver in the local or global git config |
+| `functions/DeveloperSetup/Register-D365XmlFileMergeDriver.ps1` | Registers the `d365fo-xml` git merge driver in the local or global git config |
 | `functions/DailyBuild/Merge-DailyBuildBranch.ps1` | Builds and updates a daily-build branch by merging active pull requests to main |
 
 ## Installation
@@ -56,6 +58,25 @@ pwsh -File D365GitOps/functions/DeveloperSetup/Register-D365LabelFileMergeDriver
 ```powershell
 pwsh -File D365GitOps/functions/MergeDrivers/Merge-D365LabelFile.ps1 -RepoRoot $(Build.SourcesDirectory)
 ```
+
+### Merge driver (XML metadata)
+
+Resolves conflicts caused by elements added, changed or removed on both sides of
+order-independent collections (table fields, privilege entry points, class methods, ...).
+Everything else keeps git's line-based merge.
+
+```gitattributes
+*.xml     merge=d365fo-xml
+*.rnrproj merge=d365fo-xml
+```
+
+```powershell
+Import-Module D365GitOps
+Register-D365XmlFileMergeDriver                              # registers in local .git/config
+Merge-D365XmlFile -ExportDefaultRules ./.xmlmergerules       # optional: customize and commit the rules
+```
+
+See [MergeDrivers](functions/MergeDrivers/README.md) for the rules format and lookup order.
 
 ### Daily build branch
 

@@ -1,0 +1,87 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Rules for the d365fo-xml git merge driver (Merge-D365XmlFile).
+#
+# A rule selects repeated sibling elements whose order does not matter. When git's
+# line-based merge of a file conflicts, the selected siblings are merged as a set:
+# elements added on both sides are all kept, deletions and one-sided changes are
+# applied, everything else keeps git's line-based merge.
+#
+# Syntax - one rule per line, lines starting with '#' are comments:
+#
+#   <xpath> [key=<xpath>]
+#
+#   <xpath>  XPath 1.0 selecting the order-independent elements. Element names are matched
+#            by local name, so do not use namespace prefixes (also for namespaced files).
+#   key=     Optional XPath evaluated on each selected element. Its string value
+#            identifies the element in base/ours/theirs (case-insensitive):
+#              changed on one side only                -> that change is taken
+#              changed on both sides                   -> line-based merge of that element
+#              added on both sides with other content  -> conflict
+#              deleted on one side, changed on other   -> conflict
+#            Without key the whole element (with its subtree) is the identity: a change
+#            is a removal plus an addition, so same-name duplicates are not detected.
+#
+# Lookup order: -RulesPath, $env:D365GITOPS_XML_MERGE_RULES, <repository root>/.xmlmergerules,
+# then this file (shipped with the D365GitOps module).
+# Create a customizable copy: Merge-D365XmlFile -ExportDefaultRules ./.xmlmergerules
+#
+# Only list collections whose element order has no functional meaning. Do not add ordered
+# ones such as form controls, menus, enum values, index fields or field group fields.
+
+# --- X++ source code ----------------------------------------------------------------
+/AxClass/SourceCode/Methods/Method key=Name
+/AxTable/SourceCode/Methods/Method key=Name
+/AxView/SourceCode/Methods/Method key=Name
+/AxDataEntityView/SourceCode/Methods/Method key=Name
+/AxMap/SourceCode/Methods/Method key=Name
+/AxQuery/SourceCode/Methods/Method key=Name
+/AxForm/SourceCode/Methods/Method key=Name
+/AxForm/SourceCode/DataSources/DataSource key=Name
+/AxForm/SourceCode/DataSources/DataSource/Methods/Method key=Name
+
+# --- Tables -------------------------------------------------------------------------
+/AxTable/Fields/AxTableField key=Name
+/AxTable/FieldGroups/AxTableFieldGroup key=Name
+/AxTable/Indexes/AxTableIndex key=Name
+/AxTable/Relations/AxTableRelation key=Name
+/AxTable/Relations/AxTableRelation/Constraints/AxTableRelationConstraint key=Name
+/AxTable/DeleteActions/AxTableDeleteAction key=Name
+/AxTable/Mappings/AxTableMapping key=MappingTable
+
+# --- Table extensions ---------------------------------------------------------------
+/AxTableExtension/Fields/AxTableField key=Name
+/AxTableExtension/FieldGroups/AxTableFieldGroup key=Name
+/AxTableExtension/FieldGroupExtensions/AxTableFieldGroupExtension key=Name
+/AxTableExtension/FieldModifications/AxTableFieldModification key=Name
+/AxTableExtension/Indexes/AxTableIndex key=Name
+/AxTableExtension/Relations/AxTableRelation key=Name
+/AxTableExtension/DeleteActions/AxTableDeleteAction key=Name
+/AxTableExtension/PropertyModifications/AxPropertyModification key=Name
+
+# --- Views and data entities --------------------------------------------------------
+/AxView/Fields/AxViewField key=Name
+/AxDataEntityView/Fields/AxDataEntityViewField key=Name
+/AxDataEntityView/FieldGroups/AxTableFieldGroup key=Name
+/AxDataEntityView/Keys/AxDataEntityViewKey key=Name
+/AxDataEntityViewExtension/Fields/AxDataEntityViewField key=Name
+
+# --- Security -----------------------------------------------------------------------
+/AxSecurityPrivilege/EntryPoints/AxSecurityEntryPointReference key=Name
+/AxSecurityPrivilege/EntryPoints/AxSecurityEntryPointReference/Forms/AxSecurityEntryPointReferenceForm key=Name
+/AxSecurityPrivilege/DataEntityPermissions/AxSecurityDataEntityPermission key=Name
+/AxSecurityDuty/Privileges/AxSecurityPrivilegeReference key=Name
+/AxSecurityDutyExtension/Privileges/AxSecurityPrivilegeReference key=Name
+/AxSecurityRole/Duties/AxSecurityDutyReference key=Name
+/AxSecurityRole/Privileges/AxSecurityPrivilegeReference key=Name
+/AxSecurityRole/SubRoles/AxSecurityRoleReference key=Name
+/AxSecurityRoleExtension/Duties/AxSecurityDutyReference key=Name
+/AxSecurityRoleExtension/Privileges/AxSecurityPrivilegeReference key=Name
+/AxSecurityRoleExtension/SubRoles/AxSecurityRoleReference key=Name
+
+# --- Model descriptor (Descriptor/*.xml) and Visual Studio projects (*.rnrproj) -----
+/AxModelInfo/ModuleReferences/string
+/Project/ItemGroup/Content key=@Include
+/Project/ItemGroup/Folder key=@Include

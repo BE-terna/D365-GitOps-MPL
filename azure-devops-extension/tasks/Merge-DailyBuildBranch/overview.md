@@ -47,3 +47,17 @@ steps:
 - `mergeStrategy`: `merge` or `squash` (default: `merge`)
 - `defaultPriority`: Fallback priority if no `priority:x` label is present (default: `100`)
 - `skipUnchangedPush`: Skip force-push when branch content is unchanged (default: `false`)
+
+## XML merge driver
+
+The task registers the `d365fo-xml` git merge driver before merging pull requests. Conflicts
+caused by different PRs adding, changing or removing order-independent XML elements (table
+fields, privilege entry points, class methods, ...) are resolved automatically. Enable it in
+the repository with `.gitattributes`:
+
+```gitattributes
+*.xml     merge=d365fo-xml
+*.rnrproj merge=d365fo-xml
+```
+
+Optional: commit custom rules as `.xmlmergerules` in the repository root. Requires PowerShell 7 (`pwsh`) on the agent.
