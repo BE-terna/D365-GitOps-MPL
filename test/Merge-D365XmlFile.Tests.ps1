@@ -478,8 +478,10 @@ Describe 'Merge-D365XmlFile' {
             & $git config user.name 'Test'
             & $git config user.email 'test@example.com'
 
-            $registration = & pwsh -NoProfile -WorkingDirectory $repository -File $registerScript -MergeXmlScriptPath $mergeScript 2>&1
+            $moduleManifest = Join-Path $moduleRoot 'D365GitOps.psd1'
+            $registration = & pwsh -NoProfile -WorkingDirectory $repository -Command "Import-Module '$moduleManifest'; Register-D365XmlFileMergeDriver" 2>&1
             $LASTEXITCODE | Should -Be 0 -Because ($registration | Out-String)
+            (& git -C $repository config --get merge.d365fo-xml.driver) | Should -Match '-File'
 
             Set-Content -LiteralPath (Join-Path $repository '.gitattributes') -Value '*.xml merge=d365fo-xml'
             Set-Content -LiteralPath (Join-Path $repository '.xmlmergerules') -Value @(

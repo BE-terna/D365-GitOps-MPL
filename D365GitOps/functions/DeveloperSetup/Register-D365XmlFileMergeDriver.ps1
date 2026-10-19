@@ -67,8 +67,16 @@ $mergeXmlCommand = if ($PSCmdlet.ParameterSetName -eq 'CustomCommand') {
     Get-Command $MergeXmlCommandName -ErrorAction Ignore
 }
 if ($mergeXmlCommand) {
-    # Quoted as a whole so git's quoted %P (paths with spaces) reaches PowerShell as one string.
-    $driver = "pwsh -NoProfile -Command `"$($mergeXmlCommand.Name) $driverArguments`""
+    $mergeXmlScriptPath = $mergeXmlCommand.ScriptBlock.File
+    if ($mergeXmlScriptPath) {
+        # Run the command's source script because its function is not available in the new process.
+        $mergeXmlScriptPath = (Resolve-Path -LiteralPath $mergeXmlScriptPath).ProviderPath.Replace('\', '/')
+        $driver = "pwsh -NoProfile -File `"$mergeXmlScriptPath`" $driverArguments"
+    }
+    else {
+        # Quoted as a whole so git's quoted %P (paths with spaces) reaches PowerShell as one string.
+        $driver = "pwsh -NoProfile -Command `"$($mergeXmlCommand.Name) $driverArguments`""
+    }
 }
 else {
     if ([System.IO.Path]::IsPathRooted($MergeXmlScriptPath)) {
