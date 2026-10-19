@@ -28,8 +28,6 @@ FunctionsToExport = @(
     'Merge-D365XmlFile'
     'Register-D365LabelFileMergeDriver'
     'Register-D365XmlFileMergeDriver'
-    'Merge-D365MetadataXml'
-    'Register-D365MetadataXmlMergeDriver'
 )
 
 CmdletsToExport = @()
@@ -42,12 +40,9 @@ FileList = @(
     'D365GitOps.psm1',
     'functions/DeveloperSetup/Register-D365LabelFileMergeDriver.ps1',
     'functions/DeveloperSetup/Register-D365XmlFileMergeDriver.ps1',
-    'functions/DeveloperSetup/Register-D365MetadataXmlMergeDriver.ps1',
     'functions/MergeDrivers/Merge-D365LabelFile.ps1',
     'functions/MergeDrivers/Merge-D365XmlFile.ps1',
     'functions/MergeDrivers/D365FO.xmlmergerules',
-    'functions/MergeDrivers/Merge-D365MetadataXml.ps1',
-    'functions/MergeDrivers/Default-UnorderedElements.rules',
     'functions/DailyBuild/Merge-DailyBuildBranch.ps1'
 )
 

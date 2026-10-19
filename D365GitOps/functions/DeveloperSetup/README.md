@@ -12,8 +12,7 @@ Scripts for configuring a developer workstation to use D365GitOps tooling.
 | File | Description |
 |------|-------------|
 | `Register-D365LabelFileMergeDriver.ps1` | Defines the `Register-D365LabelFileMergeDriver` function that registers the `d365fo-label` git merge driver |
-| `Register-D365XmlFileMergeDriver.ps1` | Defines the `Register-D365XmlFileMergeDriver` function for the general-purpose XML merge driver |
-| `Register-D365MetadataXmlMergeDriver.ps1` | Defines the `Register-D365MetadataXmlMergeDriver` function that registers the `d365fo-xml` git merge driver |
+| `Register-D365XmlFileMergeDriver.ps1` | Defines the `Register-D365XmlFileMergeDriver` function that registers the `d365fo-xml` git merge driver |
 
 ## Usage
 
@@ -26,14 +25,10 @@ Import-Module D365GitOps
 # Register for the current repository only
 Register-D365LabelFileMergeDriver
 Register-D365XmlFileMergeDriver
-# Alternatively, choose the D365FO metadata-specific implementation:
-Register-D365MetadataXmlMergeDriver
 
 # Register globally for all repositories on this machine
 Register-D365LabelFileMergeDriver -Global
 Register-D365XmlFileMergeDriver -Global
-# Alternatively:
-Register-D365MetadataXmlMergeDriver -Global
 ```
 
 ### Dot-source directly (no module install required)
@@ -44,9 +39,6 @@ Register-D365LabelFileMergeDriver
 
 . ./D365GitOps/functions/DeveloperSetup/Register-D365XmlFileMergeDriver.ps1
 Register-D365XmlFileMergeDriver
-
-. ./D365GitOps/functions/DeveloperSetup/Register-D365MetadataXmlMergeDriver.ps1
-Register-D365MetadataXmlMergeDriver
 ```
 
 ## What it does
@@ -60,12 +52,6 @@ merge.d365fo-label.driver = pwsh -File "<path>/Merge-D365LabelFile.ps1" -Base %O
 merge.d365fo-xml.name   = XML merger
 merge.d365fo-xml.driver = pwsh -File "<path>/Merge-D365XmlFile.ps1" -Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P
 ```
-
-Both XML registration functions configure `merge.d365fo-xml`; choose one for a
-repository or machine, since registering one after the other replaces the
-previous driver command. `Register-D365XmlFileMergeDriver` selects the general-
-purpose rule-based implementation. `Register-D365MetadataXmlMergeDriver`
-selects the D365FO metadata implementation.
 
 Driver paths are resolved relative to their registration scripts, so they work
 whether installed from the PowerShell Gallery or used directly from source.
@@ -85,4 +71,4 @@ whether installed from the PowerShell Gallery or used directly from source.
 - Run once per clone (local) or once per machine (global). This must also be
   done by any CI/CD automation that merges pull requests, since these are
   local git config settings, not something committed to the repository.
-- See [MergeDrivers](../MergeDrivers/README.md) for details on both XML implementations.
+- See [MergeDrivers](../MergeDrivers/README.md) for XML merge rules and usage.
