@@ -60,7 +60,7 @@ $InformationPreference = 'Continue'
 
 $driverArguments = '-Base %O -Ours %A -Theirs %B -MarkerSize %L -FilePath %P'
 if ($RulesPath) {
-    $driverArguments += " -RulesPath '$($RulesPath.Replace('\', '/'))'"
+    $driverArguments += " -RulesPath '$($RulesPath.Replace("'", "'\''").Replace('\', '/'))'"
 }
 
 $mergeXmlCommand = if ($PSCmdlet.ParameterSetName -eq 'CustomCommand') {

@@ -753,6 +753,19 @@ function Select-Trail {
     )
 
     if ($null -ne $Ours -and $null -ne $Theirs) {
+        if (
+            $Ours -cne $Theirs -and
+            (
+                $null -eq $Base -or
+                ($Ours -cne $Base -and $Theirs -cne $Base)
+            ) -and
+            (
+                -not [string]::IsNullOrWhiteSpace($Ours) -or
+                -not [string]::IsNullOrWhiteSpace($Theirs)
+            )
+        ) {
+            throw 'Conflicting trailing comments or processing instructions.'
+        }
         if ($null -ne $Base -and $Ours -ceq $Base) {
             return $Theirs
         }

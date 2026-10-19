@@ -99,6 +99,9 @@ BeforeAll {
             ,
             [string]
             $Label = '@Test:Table'
+            ,
+            [string]
+            $Trail = ''
         )
 
         $lines = [System.Collections.Generic.List[string]]::new()
@@ -120,6 +123,9 @@ BeforeAll {
                 $lines.Add("`t`t`t<Name>$name</Name>")
                 $lines.Add("`t`t`t<ExtendedDataType>$type</ExtendedDataType>")
                 $lines.Add("`t`t</AxTableField>")
+            }
+            if ($Trail) {
+                $lines.Add("`t`t$Trail")
             }
             $lines.Add("`t</Fields>")
         }
@@ -249,6 +255,28 @@ Describe 'Merge-D365XmlFile' {
             $result.ExitCode | Should -Be 0 -Because $result.Output
             $result.Output | Should -Match 'Merged order-independent XML elements'
             $result.Text | Should -BeExactly (New-AxTable -Field 'B:Description', 'D:Name', 'E:Name')
+        }
+
+        It 'keeps the one-sided change to trailing comments' {
+            $result = Invoke-XmlMerge `
+                -Base (New-AxTable -Field 'A:Name' -Trail '<!-- base -->') `
+                -Ours (New-AxTable -Field 'A:Name', 'B:Name' -Trail '<!-- base -->') `
+                -Theirs (New-AxTable -Field 'A:Name', 'C:Name' -Trail '<!-- theirs -->')
+
+            $result.ExitCode | Should -Be 0 -Because $result.Output
+            $result.Text | Should -BeExactly (New-AxTable -Field 'A:Name', 'B:Name', 'C:Name' -Trail '<!-- theirs -->')
+        }
+
+        It 'falls back to a line-based conflict for divergent trailing comments' {
+            $result = Invoke-XmlMerge `
+                -Base (New-AxTable -Field 'A:Name' -Trail '<!-- base -->') `
+                -Ours (New-AxTable -Field 'A:Name', 'B:Name' -Trail '<!-- ours -->') `
+                -Theirs (New-AxTable -Field 'A:Name', 'C:Name' -Trail '<!-- theirs -->')
+
+            $result.ExitCode | Should -Be 1
+            $result.Output | Should -Match 'Conflicting trailing comments or processing instructions'
+            $result.Text | Should -Match '(?m)^<{7} ours'
+            $result.Text | Should -Match '(?m)^>{7} theirs'
         }
 
         It 'expands an empty collection' {
