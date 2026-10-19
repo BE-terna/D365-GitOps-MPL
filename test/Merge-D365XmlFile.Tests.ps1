@@ -535,4 +535,26 @@ Describe 'D365GitOps module' {
             Remove-Item -Path Function:\Merge-D365XmlFileUnderTest
         }
     }
+
+    It 'returns the merge status when used as a module function' {
+        $directory = New-MergeInput `
+            -Base (New-Config '1') `
+            -Ours (New-Config '1', '2') `
+            -Theirs (New-Config '1')
+        $base = Join-Path $directory 'Base.xml'
+        $ours = Join-Path $directory 'Ours.xml'
+        $theirs = Join-Path $directory 'Theirs.xml'
+        $command = @"
+`$scriptInfo = Get-Command -Name '$mergeScript' -CommandType ExternalScript
+`$null = New-Item -Path Function:\Merge-D365XmlFileUnderTest -Value `$scriptInfo.ScriptBlock -Force
+`$status = Merge-D365XmlFileUnderTest -Base '$base' -Ours '$ours' -Theirs '$theirs'
+"continued:`$status"
+"@
+
+        $output = & pwsh -NoProfile -Command $command
+
+        $LASTEXITCODE | Should -Be 0
+        $output | Should -Contain 'continued:0'
+        [System.IO.File]::ReadAllText($ours) | Should -BeExactly (New-Config '1', '2')
+    }
 }

@@ -1082,4 +1082,8 @@ finally {
     Remove-Item -LiteralPath $workDirectory -Recurse -Force -ErrorAction Ignore
 }
 
-exit $exitCode
+if ($MyInvocation.MyCommand.CommandType -eq [System.Management.Automation.CommandTypes]::ExternalScript) {
+    exit $exitCode
+}
+
+return $exitCode
